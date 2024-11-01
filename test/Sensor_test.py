@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-
+from time import sleep
 class Sensor:
     def __init__(self, pin, name="Sensor"):
         self.pin = pin
@@ -25,9 +25,14 @@ def main():
     reset_sensor = Sensor(pin=18, name="Reset")
 
     # 测试每个传感器的状态
-    magnet_sensor.test_sensor()
-    stop_sensor.test_sensor()
-    reset_sensor.test_sensor()
+    i = 0
+    while i < 10:
+        magnet_sensor.test_sensor()
+        stop_sensor.test_sensor()
+        reset_sensor.test_sensor()
+        sleep(2)
+        
+        i += 1
 
 if __name__ == "__main__":
     try:

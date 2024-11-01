@@ -281,7 +281,7 @@ oldtime = datetime.datetime.now()
 #            1        2       3       4       5        6      7       8       9      10      11      12       13  
 
 #pigNumber=[933,596,710,767,936,765,685,766,594, 461,615,591]
-s=2               # Stall number
+s=3               # Stall number
 testStepper = Stepper([29,15,11 ,16,18,37])         # the true pin number
 GPIO.setmode(GPIO.BOARD)
 DIR = 15
@@ -299,6 +299,10 @@ sleep(2)
 # when docking is set as true, it 
 # action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
 action = testStepper.step(5000, "left", 100, docking = True)
+print("########################################")
+print(action)
+sleep(10)
+print("########################################")
 handle_stop(action)
 print("returning to dock")
 #camera_id,intrinsics,configurations,pipelines=get_sensor()
@@ -319,7 +323,10 @@ while True:
                 print("moved to ", i+1)
             else:
                 action = testStepper.step(5000, "left", 0.5, docking = False)
-                action = testStepper.step(110000, "left", 0.5, docking = False)
+                # action = testStepper.step(110000, "left", 0.5, docking = False)
+                
+                # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
+                action = testStepper.step(30000, "left", 0.5, docking = False)
                 handle_stop(action)
                 print("moved to ", i+1)
 

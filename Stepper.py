@@ -22,7 +22,7 @@ class Stepper:
         self.enablePin = self.pins[2]       # 11
         self.endPin = self.pins[3]          # 16
         self.resetPin = self.pins[4]        # 18
-        self.magPin=self.pins[5]            # 38
+        self.magPin=self.pins[5]            # 37
         # use the broadcom layout for the gpio
         gpio.setmode(gpio.BOARD)
         gpio.setwarnings(False) 
@@ -56,14 +56,15 @@ class Stepper:
         # get the sensor status
         preStatus = gpio.input(self.magPin)
         print("Original magnetic prestatus:{}".format(preStatus))
+        print("docking status:{}".format(docking))
         sleep(10)
-        preResetStatus = gpio.input(self.resetPin)
+        preResetStatus = gpio.input(self.resetPin)  # 1为高电平，未感应到磁铁
         preEndStatus = gpio.input(self.endPin)
         
         # set the output to true for left and false for right
-        turnLeft = False
+        turnLeft = False            # 将motor的初始点位设置为低电平，则电机将逆时针旋转，整个系统将后退
         if (dir == 'right'):
-            turnLeft = True
+            turnLeft = True         # 将motor的初始点位设置为高电平，则电机将顺时针旋转，整个系统将前进
         elif (dir != 'left'):
             print("STEPPER ERROR: no direction supplied")
             return True
@@ -91,6 +92,7 @@ class Stepper:
             if (stepCounter > 2*steps and docking == False):
                 # 如果向右转到极限位置，返回 "right_end" 并进行对接（docking=True）。
                 if(dir=="right"):
+                    # 走到了最右边的尽头，即前进的尽头
                     print("right dead end")
                     turnLeft=False
                     stepCounter=0
@@ -99,6 +101,7 @@ class Stepper:
                     return "right_end"
                 elif(dir=="left"):
                     # 如果向左旋转到极限，返回 "docked"，表示对接成功。
+                    # 走到了最左边的尽头，起始点附近
                     print("left dead end")
                     turnLeft=False
                     stepCounter=0
@@ -119,7 +122,7 @@ class Stepper:
             stepCounter += 1
             
             # test
-            print("StepCounter is {}".format(stepCounter))
+            # print("StepCounter is {}".format(stepCounter))
         
 
             # 状态缓冲：每次循环更新最近三次的传感器状态，便于判断状态变化。
@@ -140,7 +143,7 @@ class Stepper:
             #print(gpio.input(self.magPin))
             if sum(endStatus) == 0:
                 sleep(1)
-                turnLeft=False
+                turnLeft=False          # 到了终点，电机应该停止前进，True为前进
                 steps=1000000
                 docking = True
                 print("Hit end, returning to dock1")
@@ -162,9 +165,11 @@ class Stepper:
             if(stepCounter > 1.2*steps and docking == False):
                 keepGoing = False
 
-            print("Current magnetic status is {}".format(gpio.input(self.magPin)))
-            if (preStatus ==1):
-                if (sum(preMagStatus)==0 and docking == False):
+            # print("Current magnetic status is {}".format(gpio.input(self.magPin)))
+            # print("Current end status is {}".format(gpio.input(self.endPin)))
+            # print("Current reset status is {}".format(gpio.input(self.resetPin)))
+            if (preStatus == 1):
+                if (sum(preMagStatus) == 0 and docking == False):
                     if (stepCounter>0.3*steps and docking == False):
                         print("detected stop")
                         keepGoing= False

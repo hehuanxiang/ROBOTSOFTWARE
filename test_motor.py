@@ -8,7 +8,7 @@ testStepper = Stepper([29,15,11 ,16,18,37])#140
 #pull,dir,ena, end,rest,mag
 #testStepper.step(40000, "right", 1, docking = False)
 
-testStepper.step(50000, "right", 50, docking = False)
+testStepper.step(500000, "right", 100, docking = True)      # right means moving forward
 
 
 

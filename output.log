@@ -1,0 +1,97 @@
+robot start in 2 sec, stop it now to manually move the robot
+Original magnetic prestatus:1
+docking status:True
+The goal of step is 5000
+StepCounter is 1
+Current magnetic status is 1
+StepCounter is 2
+Current magnetic status is 1
+StepCounter is 3
+Current magnetic status is 1
+Docked, stepCounter:  3
+########################################
+docked
+########################################
+Get in the handle_stop function.
+Current sign for handle_stop functiondocked
+docked2
+Original magnetic prestatus:0
+docking status:False
+The goal of step is 3000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
+Hit end, returning to dock1
+Get in the handle_stop function.
+Current sign for handle_stop functionright_end
+end3
+Original magnetic prestatus:0
+docking status:True
+The goal of step is 10000000
+StepCounter is 1
+Current magnetic status is 0
+StepCounter is 2
+Current magnetic status is 0
+StepCounter is 3
