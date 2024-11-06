@@ -53,6 +53,7 @@ config = rs.config()
 config.enable_stream(rs.stream.depth, 1024,768, rs.format.z16,30)
 config.enable_stream(rs.stream.color, 1920,1080, rs.format.bgr8,30)
 config.enable_stream(rs.stream.infrared,0,1024,768,rs.format.y8,30)
+config.enable_stream(rs.stream.infrared,1,1024,768,rs.format.y8,30)
 # config.enable_stream(rs.stream.infrared,2,848,480,rs.format.y8,30)
 class saveDataThread(threading.Thread):
     def __init__(self, threadID, frameset,i,path, PIG_ID,time_stamp,intr):
@@ -303,7 +304,7 @@ config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
 while True:
     t1 = datetime.datetime.now()
 
-    if t1.minute % 10 <= 3:             # 每十分钟拍一次
+    if t1.minute % 1 <= 3:             # 每十分钟拍一次
         for i in range (0,s):
             if i ==0:
                 #add it back

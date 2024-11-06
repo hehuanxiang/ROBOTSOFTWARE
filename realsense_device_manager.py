@@ -186,7 +186,7 @@ class DeviceManager:
         """
 
         with open(path_to_settings_file, 'r') as file:
-        	json_text = file.read().strip()
+            json_text = file.read().strip()
 
         for (device_serial, device) in self._enabled_devices.items():
             # Get the active profile and load the json file which contains settings readable by the realsense

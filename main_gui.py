@@ -288,13 +288,3 @@ while True:
                 print("return to dock")
             else:
                 print("move forward")
-                    
-
-                
-
-
-
-
-
-
-                    

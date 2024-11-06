@@ -30,6 +30,7 @@ get_intrinsic = profile.get_stream(rs.stream.depth)
 intr=get_intrinsic.as_video_stream_profile().get_intrinsics()
 print("Camera intrinsics is: {}\n".format(intr))
 
+
 frame_count = 0  # 用于命名保存的图片
 
 try:
