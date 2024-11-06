@@ -88,3 +88,9 @@ while True:
         handle_stop(action)
         print("return to dock")
 ```
+
+# Specification for Lidar L515
+Just run in the terminal
+```bash
+rs-enumerate-devices
+```

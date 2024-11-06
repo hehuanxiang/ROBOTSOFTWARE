@@ -135,6 +135,7 @@ class saveDataThread(threading.Thread):
             imageio.imwrite(path+"IR/"+name+".png", ir_image)
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
+
 def save_temperature(pigID, temp):
     excel_path = "/home/pi/Pictures/Data_Estrus_2022/" + "ID_"+str(pigID) + "/temperature_"+str(pigID)+".xlsx"
     #print(excel_path)
@@ -300,10 +301,6 @@ def get_sensor():
         pipeline.stop()
         configurations.append(config)
     return camera_id,intrinsics,configurations,pipelines
-
-
-
-                   
 
 
 oldtime = datetime.datetime.now()

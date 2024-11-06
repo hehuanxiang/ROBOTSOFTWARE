@@ -12,9 +12,10 @@ pipeline = rs.pipeline()
 config = rs.config()
 
 # 启用深度、彩色和红外流
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)  # 深度流
-config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)  # 彩色流
-config.enable_stream(rs.stream.infrared, 0, 640, 480, rs.format.y8, 30)  # 红外流
+config.enable_stream(rs.stream.depth, 1024, 768, rs.format.z16, 30)  # 深度流
+config.enable_stream(rs.stream.color, 1920,1080, rs.format.bgr8, 30)  # 彩色流
+config.enable_stream(rs.stream.infrared, 0, 1024,768, rs.format.y8, 30)  # 红外流
+# config.enable_stream(rs.stream.infrared,0,848,480,rs.format.y8,30)
 
 # 启动流
 profile = pipeline.start(config)
@@ -50,9 +51,9 @@ try:
         infrared_image = np.asanyarray(infrared_frame.get_data())
 
         # 显示各个数据流
-        cv2.imshow('Depth Stream', depth_image)
-        cv2.imshow('Color Stream', color_image)
-        cv2.imshow('Infrared Stream', infrared_image)
+        # cv2.imshow('Depth Stream', depth_image)
+        # cv2.imshow('Color Stream', color_image)
+        # cv2.imshow('Infrared Stream', infrared_image)
 
         # 保存每一帧到test文件夹
         cv2.imwrite(f"{output_folder}/depth_{frame_count}.png", depth_image)
@@ -64,6 +65,8 @@ try:
         # 按 'q' 键退出
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        
+    print("拍照结束")
 
 finally:
     # 停止流并清理资源

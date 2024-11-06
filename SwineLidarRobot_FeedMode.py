@@ -242,7 +242,6 @@ def streamSensor(pigID, feedMode):
     print("captured succeed, trying to save")
 
 
-
 def handle_stop(sign):
     if sign != None:
         testStepper = Stepper([13,15,11 ,40,37,38])#140
@@ -284,7 +283,6 @@ def get_sensor():
         pipeline.stop()
         configurations.append(config)
     return camera_id,intrinsics,configurations,pipelines
-
 
 
 def write_keys(keys):

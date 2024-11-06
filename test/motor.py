@@ -32,7 +32,7 @@ GPIO.output(ENA,GPIO.LOW)
 
 resetSensor = 1
 endSensor = 1
-stepCount = 0
+
 
 
 
@@ -56,6 +56,7 @@ def define_distance_between_stall(distance):
             break   
     
 def count_total_distance():
+    stepCount = 0
     Step_to_leave_resetpoint = 0
     # 设置电机旋转方向
     GPIO.output(DIR,0)
@@ -71,9 +72,9 @@ def count_total_distance():
 
 
         GPIO.output(STEP,True)
-        sleep(0.000005)
+        sleep(0.0005)
         GPIO.output(STEP,False)
-        sleep(0.000005)
+        # sleep(0.0005)
         
         stepCount += 1
         
@@ -89,5 +90,5 @@ def count_total_distance():
 
 
 
-
+count_total_distance()
 
