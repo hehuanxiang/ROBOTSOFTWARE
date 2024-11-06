@@ -1,61 +1,24 @@
-import io, serial, serial.tools.list_ports, socket, struct, sys, datetime, os
-import RPi.GPIO as GPIO
-from PIL import Image
-from time import sleep
-import threading
-import queue
-from Stepper import Stepper
 import pyrealsense2.pyrealsense2 as rs
-import numpy as np
-import cv2
-from pyntcloud import PyntCloud
-import argparse
-import imageio
-from realsense_device_manager import DeviceManager, post_process_depth_frame
+import os
 import time
-from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
+import datetime
+import cv2
+import numpy as np
+from time import sleep
 import scipy.io
-from temperature import read_temp
-import pandas as pd
-import openpyxl
-#Pig ID (999=empty crate)
-s_1=99
-s_2=40054
-s_3=40086
-s_4=40051
-s_5=40040
-s_6=40319
-s_7=40115
-s_8=40987
-s_9=40141
-s_10=40114
-s_11=40883
-s_12=40026
-s_13=40867
-s_14=40060
-s_15=40076
-s_16=40069
-s_17=40032
-s_18=44418
-s_19=44419
-s_20=44420
+import threading
+import sys
+sys.path.append('/home/dayi/Desktop/ROBOTSOFTWARE')
+from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
+import imageio
 
-pigNumber=[s_1,s_2,s_3,s_4,s_5,s_6,s_7,s_8,s_9,s_10,s_11,s_12,s_13,s_14,s_15,s_16,s_17,s_18,s_19,s_20]
-#           1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20
-# Fix Python 2.x.999
-try: input = raw_input
-except NameError: pass
-
-
-
-#testStepper = Stepper([15,13,11,18,12]) #step,dir,ena,stop
-testStepper = Stepper([13,15,11 ,18,40,38])#140
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.depth, 848,480, rs.format.z16,30)
 config.enable_stream(rs.stream.color, 1280,720, rs.format.bgr8,30)
 config.enable_stream(rs.stream.infrared,1,848,480,rs.format.y8,30)
 config.enable_stream(rs.stream.infrared,2,848,480,rs.format.y8,30)
+
 class saveDataThread(threading.Thread):
     def __init__(self, threadID, frameset,i,path, PIG_ID,time_stamp,intr):
         threading.Thread.__init__(self)
@@ -136,29 +99,6 @@ class saveDataThread(threading.Thread):
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
-def save_temperature(pigID, temp):
-    excel_path = "/home/pi/Pictures/Data_Estrus_2022/" + "ID_"+str(pigID) + "/temperature_"+str(pigID)+".xlsx"
-    #print(excel_path)
-    path ="/home/pi/Pictures/Data_Estrus_2022/" + "ID_"+str(pigID) + "/"#+imgname
-    if not os.path.exists(path):
-        os.makedirs(path)
-    print(temp)
-    if os.path.isfile(excel_path):
-        data = pd.read_excel(excel_path)
-        #print(data)
-        data_1 = pd.DataFrame({"Time" : [time.strftime("%d/%m/%y@%H:%M:%S")],"TEMP": [temp]})
-        #print(data_1)
-        data=data.append(data_1,ignore_index=False,verify_integrity=False, sort=None)
-        #print(data)
-        #print("has file")
-        data.to_excel(excel_path,index=False)
-
-    else:
-        data = pd.DataFrame({"Time":[time.strftime("%d/%m/%y@%H:%M:%S")],"TEMP":[temp]})
-        #print(data)
-        data.to_excel(excel_path,index=False)
-
-
 def streamSensor(pigID):
     ###########################################################################################Set saving path
     
@@ -166,13 +106,14 @@ def streamSensor(pigID):
     pig_ID=pigID
     print("ID:"+str(pig_ID))
     #path ="/media/pi/9F4B-4B4A/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
-    path ="/media/pi/9F4B/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
+    path ="./Data/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
 
     try:
         if not os.path.exists(path):
             os.makedirs(path)
+            print("Create the folder {}".format(path))
     except:
-        path ="/home/pi/Pictures/Data_Estrus_2022/" + "ID_"+str(pigID) + "/"#+imgname
+        path ="./Data/Data_Estrus_2022/" + "ID_"+str(pigID) + "/"#+imgname
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -181,16 +122,13 @@ def streamSensor(pigID):
         profile = pipeline.start(config)
         colorizer=rs.colorizer()
     # Getting the depth sensor's depth scale (see rs-align example for explanation)
-        depth_sensor = profile.get_device().first_depth_sensor()
+        depth_sensor = profile.get_devicedepth_sensor().first_depth_sensor()
         depth_sensor.set_option(rs.option.min_distance,0)
         depth_sensor.set_option(rs.option.enable_max_usable_range,0)
-
         depth_scale = depth_sensor.get_depth_scale()
         print("Depth Scale is: " , depth_scale)
         get_intrinsic = profile.get_stream(rs.stream.depth)
         intr=get_intrinsic.as_video_stream_profile().get_intrinsics()
-
-    # We will be removing the background of objects more than
     #  clipping_distance_in_meters meters away
         clipping_distance_in_meters = 3.25 #1 meter
         clipping_distance = clipping_distance_in_meters / depth_scale
@@ -257,136 +195,5 @@ def streamSensor(pigID):
         thread1.stop()
     print("captured succeed, trying to save")
 
-
-
-def handle_stop(sign):
-    if sign != None:
-        testStepper = Stepper([13,15,11 ,40,37,38])#140
-
-        if sign == "docked":
-            #move forward slightly
-            print("docked2")
-            action = testStepper.step(3000, "left", 5, docking = False)
-            handle_stop(action)
-
-            
-        elif sign == "right_end":
-            print("end3")
-            #action = testStepper.step(5000, "right", 50, docking = False)
-            action = testStepper.step(10000000, "right", 50, docking = True)
-            handle_stop(action)
-
-def get_sensor():
-    ctx = rs.context()
-        #print(ctx)
-    camera_id = []
-    intrinsics = []
-    configurations = []
-    pipelines =[]
-    for d in ctx.devices:
-        print(d.get_info(rs.camera_info.serial_number))
-        camera_id.append(d.get_info(rs.camera_info.serial_number))
-            
-        pipeline = rs.pipeline()
-        config = rs.config()
-        config.enable_device(d.get_info(rs.camera_info.serial_number))
-        config.enable_stream(rs.stream.depth, 640,480, rs.format.z16,30)
-        config.enable_stream(rs.stream.color, 1280,720, rs.format.bgr8,30)
-        config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
-
-        pipelines.append(pipeline)
-        profile = pipeline.start(config)
-        get_intrinsic = profile.get_stream(rs.stream.depth)
-        intrinsics.append(get_intrinsic.as_video_stream_profile().get_intrinsics())
-        pipeline.stop()
-        configurations.append(config)
-    return camera_id,intrinsics,configurations,pipelines
-
-
-oldtime = datetime.datetime.now()
-#distance = [ 107247, 51276 , 50000 , 50000 , 50000 , 50000 , 50000,50000,   50000, 50000,  50000, 50000 ] #13 stops
-#            1        2       3       4       5        6      7       8       9      10      11      12       13  
-
-#pigNumber=[933,596,710,767,936,765,685,766,594, 461,615,591]
-s=20
-testStepper = Stepper([13,15,11 ,40,37,38])#140
-GPIO.setmode(GPIO.BOARD)
-DIR = 15
-ENA = 11
-STEP =13
-GPIO.setup(DIR,GPIO.OUT)
-GPIO.setup(ENA,GPIO.OUT)
-GPIO.setup(STEP,GPIO.OUT)
-GPIO.output(ENA,GPIO.HIGH)
-print("robot start in 15 sec, stop it now to manually move the robot")
-sleep(15)
-action = testStepper.step(110000*24, "right", 500, docking = True)
-handle_stop(action)
-print("returning to dock")
-#camera_id,intrinsics,configurations,pipelines=get_sensor()
-pipeline = rs.pipeline()
-config = rs.config()
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
-config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
-while True:
-    t1 = datetime.datetime.now()
-
-    if t1.minute % 10 <= 3:
-        for i in range (0,s):
-            if i ==0:
-                #add it back
-                action = testStepper.step(30000, "left", 0.5, docking = False)
-                handle_stop(action)
-                print("moved to ", i+1)
-            else:
-                action = testStepper.step(5000, "left", 0.5, docking = False)
-                action = testStepper.step(70000, "left", 0.5, docking = False)
-                handle_stop(action)
-                print("moved to ", i+1)
-
-            pigID = i
-                    #initPYGAME(pigID+1)
-            if pigNumber[i]!=999:
-                       # streamSensor(pigNumber[i])
-
-                try:
-                    temp = read_temp()
-
-                    save_temperature(pigNumber[i],temp)
-                except:
-                    print("failed to save temperature")
-                    
-                try:
-                    #streamSensor(pigNumber[i],pipelines[1],configurations[1])
-                    streamSensor(pigNumber[i])
-
-                except:
-                            
-                    print("failed to initialize camera")
-                    sleep(3)
-                    #camera_id,intrinsics,configurations,pipelines=get_sensor()
-                    print("failed to initialize camera")
-                    sleep(3)
-                    pipeline = rs.pipeline()
-                    config = rs.config()
-                    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-                    config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
-                    config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
-
-
-                if pigNumber[i]==999:
-                    sleep(1)
-
-
-
-                   
-                #capturePictures()
-                        
-
-        action = testStepper.step(110000*24, "right", 500, docking = True)
-        handle_stop(action)
-        print("return to dock")
-
-
-         
+if __name__ == "__main__":
+    streamSensor(111)

@@ -15,6 +15,7 @@ from realsense_device_manager import DeviceManager, post_process_depth_frame
 import time
 from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
 import scipy.io
+import traceback
 #Pig ID (999=empty crate)
 s_1=999
 s_2=999
@@ -49,10 +50,11 @@ except NameError: pass
 testStepper = Stepper([13,15,11 ,18,40,38])#140
 pipeline = rs.pipeline()
 config = rs.config()
-config.enable_stream(rs.stream.depth, 848,480, rs.format.z16,30)
-config.enable_stream(rs.stream.color, 1280,720, rs.format.bgr8,30)
-config.enable_stream(rs.stream.infrared,1,848,480,rs.format.y8,30)
-config.enable_stream(rs.stream.infrared,2,848,480,rs.format.y8,30)
+config.enable_stream(rs.stream.depth, 1024,768, rs.format.z16,30)
+config.enable_stream(rs.stream.color, 1920,1080, rs.format.bgr8,30)
+config.enable_stream(rs.stream.infrared,0,1024,768,rs.format.y8,30)
+config.enable_stream(rs.stream.infrared,1,1024,768,rs.format.y8,30)
+# config.enable_stream(rs.stream.infrared,2,848,480,rs.format.y8,30)
 class saveDataThread(threading.Thread):
     def __init__(self, threadID, frameset,i,path, PIG_ID,time_stamp,intr):
         threading.Thread.__init__(self)
@@ -86,12 +88,7 @@ class saveDataThread(threading.Thread):
             color_image = np.asanyarray(color_frame.get_data())
             ir_image = np.asanyarray(ir_frame.get_data())
         
-            #depth_frame=depth_threshold.process(depth_frame)
-            #filtered_depth_frame=post_process_depth_frame(depth_frame, temporal_smooth_alpha=0.1, temporal_smooth_delta=50)
             colorized=colorizer.process(ir_frame)
-            #pc=rs.pointcloud()
-            #pc.map_to(ir_frame)
-            #points=pc.calculate(filtered_depth_frame)
             index=(self.i)
             index=j
             name=imgname+str(j)
@@ -112,9 +109,7 @@ class saveDataThread(threading.Thread):
             obj=np.stack((XX,YY,ZZ))
             if not os.path.exists(path+"DM"):
                 os.makedirs(path+"DM")
-        #print(index)
-            #if not os.path.exists(path+"pcl"):
-             #   os.makedirs(path+"pcl")
+
             if not os.path.exists(path+"depth"):
                 os.makedirs(path+"depth")
             if not os.path.exists(path+"RGB"):
@@ -135,12 +130,9 @@ class saveDataThread(threading.Thread):
 
 
 def streamSensor(pigID):
-    ###########################################################################################Set saving path
-    
     
     pig_ID=pigID
     print("ID:"+str(pig_ID))
-    #path ="/media/pi/9F4B-4B4A/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
     path ="./Data/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
 
     try:
@@ -156,7 +148,8 @@ def streamSensor(pigID):
         profile = pipeline.start(config)
         colorizer=rs.colorizer()
     # Getting the depth sensor's depth scale (see rs-align example for explanation)
-        depth_sensor = profile.get_devicedepth_sensor().first_depth_sensor()
+        # depth_sensor = profile.get_devicedepth_sensor().first_depth_sensor()
+        depth_sensor = profile.get_device().first_depth_sensor()
         depth_sensor.set_option(rs.option.min_distance,0)
         depth_sensor.set_option(rs.option.enable_max_usable_range,0)
         depth_scale = depth_sensor.get_depth_scale()
@@ -172,14 +165,10 @@ def streamSensor(pigID):
     # The "align_to" is the stream type to which we plan to align depth frames.
         align_to = rs.stream.depth
         align = rs.align(align_to)
-    #for x in range(30):
-        #pipeline.wait_for_frames()
         
         tt = time.monotonic()
         t = datetime.datetime.now()
-    #depth_frameset=[]
-    #color_frameset=[]
-    #ir_frameset=[]
+
         frameset=[]
         interval=20
         for x in range(interval*1):
@@ -203,8 +192,9 @@ def streamSensor(pigID):
         #ir_image=np.asanyarray(aligned_ir_frame.get_data())        
         #images = np.hstack((ir_image,ir_image))
 
-            cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
-            cv2.imshow('Align Example', depth_colormap)
+            # 2024.11.1
+            # cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
+            # cv2.imshow('Align Example', depth_colormap)
             key = cv2.waitKey(1)
 
             if x%interval==0: #60
@@ -282,7 +272,7 @@ oldtime = datetime.datetime.now()
 
 #pigNumber=[933,596,710,767,936,765,685,766,594, 461,615,591]
 s=3               # Stall number
-testStepper = Stepper([29,15,11 ,16,18,37])         # the true pin number
+testStepper = Stepper([29,15,11,16,18,37])         # the true pin number
 GPIO.setmode(GPIO.BOARD)
 DIR = 15
 ENA = 11
@@ -314,7 +304,7 @@ config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
 while True:
     t1 = datetime.datetime.now()
 
-    if t1.minute % 1 <= 3:
+    if t1.minute % 1 <= 3:             # 每十分钟拍一次
         for i in range (0,s):
             if i ==0:
                 #add it back
@@ -332,25 +322,24 @@ while True:
 
             pigID = i
                     #initPYGAME(pigID+1)
-            if pigNumber[i]!=999:
-                       # streamSensor(pigNumber[i])
-
+            if pigNumber[i]!=9998:
                 try:
-                    #streamSensor(pigNumber[i],pipelines[1],configurations[1])
+                    print("pigID is {}".format(pigID))
                     streamSensor(pigNumber[i])
-
-                except:
-                            
-                    print("failed to initialize camera")
-                    sleep(3)
-                    #camera_id,intrinsics,configurations,pipelines=get_sensor()
-                    print("failed to initialize camera")
-                    sleep(3)
-                    pipeline = rs.pipeline()
-                    config = rs.config()
-                    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-                    config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
-                    config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
+                except Exception as e:
+                    print("An error occurred:")
+                    traceback.print_exc()
+                
+                # except:     
+                #     print("failed to initialize camera")
+                #     sleep(3)
+                #     print("failed to initialize camera")
+                #     sleep(3)
+                #     pipeline = rs.pipeline()
+                #     config = rs.config()
+                #     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+                #     config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
+                #     config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
 
 
                 if pigNumber[i]==999:

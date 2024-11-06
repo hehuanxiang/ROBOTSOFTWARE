@@ -88,3 +88,55 @@ while True:
         handle_stop(action)
         print("return to dock")
 ```
+
+# L515 帧数取舍以及深度帧和RGB帧对齐
+每次停留的时候启动函数一次
+```python
+def streamSensor(pigID)
+```
+
+```python
+    # 由于RealSense 相机中的深度帧是通过红外传感器获取的，相机会发出红外光，
+    # 然后用两个红外传感器（如 D435）或者一个红外传感器（如 L515）进行计算。
+    # 红外帧与深度帧已经有很强的关联性，
+    # 通常在硬件层面上它们的坐标是一致的，不需要额外对齐。
+    # 因此这里只需要将Depth和RGB信息进行对其
+    align_to = rs.stream.depth
+    align = rs.align(align_to)
+    
+    tt = time.monotonic()
+    t = datetime.datetime.now()
+
+    frameset=[]
+    interval=20
+
+    # 在原系统中，对于每只猪只保留了一帧的图像，realsense最高支持30帧拍摄。
+    for x in range(interval*1):
+        frames = pipeline.wait_for_frames()
+    # frames.get_depth_frame() is a 640x360 depth image
+        st =int(time.monotonic()-tt)
+        if st >= 21:
+            print("captured failed")
+            break
+
+        aligned_frames = align.process(frames)
+
+        aligned_depth_frame = aligned_frames.get_depth_frame() # 
+        if not aligned_depth_frame:
+            continue
+        depth_image = np.asanyarray(aligned_depth_frame.get_data())
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        key = cv2.waitKey(1)
+
+        if x%interval==0: #60
+            print(int(x/interval))
+            frameset.append(aligned_frames)
+```
+
+
+
+# Specification for Lidar L515
+Just run in the terminal
+```bash
+rs-enumerate-devices
+```
