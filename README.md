@@ -140,3 +140,75 @@ Just run in the terminal
 ```bash
 rs-enumerate-devices
 ```
+
+# 使用SSH远程连接树莓派
++ 在树莓派上打开终端，输入以下命令启用SSH：
+    ```bash
+    sudo raspi-config
+    ```
++ 选择 Interface Options，然后选择 SSH 并启用。
++ 找到树莓派的IP地址
+    ```bash
+    hostname -I
+    ```
++ 在另一台电脑上通过SSH连接
+
+# 更改树莓派的默认python版本
++ 检查系统中已安装的 Python 版本
+    ```bash
+    ls /usr/bin/python*
+    ```
++ 添加 Python 版本到 alternatives： 执行以下命令以将 Python 3.7 添加到 update-alternatives 的管理中
+    ```bash
+    sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2
+
+    ```
++ 选择默认版本
+    ```bash
+    sudo update-alternatives --config python
+    ```
+    系统会列出已配置的 Python 版本。输入相应的数字选择 Python 3.7 并按回车。
++ 确认版本
+    ```bash
+    python --version
+    ```
+# VScode免密连接树莓派
+## 生成SSH密钥对
++ 打开终端（Mac/Linux）或 PowerShell（Windows）
+    ```bash
+    ssh-keygen -t rsa -b 4096
+    ```
++ 按提示设置密钥保存路径（默认为 ~/.ssh/id_rsa），如果已经有密钥，可以覆盖或选择新的路径。
++ 创建密钥时，可以直接按回车跳过密码设置，以便实现免密登录。
+## 公钥复制到树莓派
++ 显示公钥内容： 在 PowerShell 中，运行以下命令显示公钥内容（假设公钥存放在 ~/.ssh/id_rsa.pub）
+    ```bash
+    Get-Content ~/.ssh/id_rsa.pub
+    ```
++ 输入密码登录后，在树莓派上创建 ~/.ssh 文件夹（如果不存在），并将公钥添加到 authorized_keys 文件中
+    ```bash
+    mkdir -p ~/.ssh
+    echo "粘贴你复制的公钥内容" >> ~/.ssh/authorized_keys
+    chmod 600 ~/.ssh/authorized_keys
+    chmod 700 ~/.ssh
+    ```
+
+# MobaXterm免密连接树莓派
+## 生成SSH密钥对
++ 打开 MobaXterm。
++ 进入 Tools > MobaKeyGen，打开密钥生成工具。
++ 在 MobaKeyGen 窗口中，点击 Generate 按钮生成一对 SSH 密钥（默认会生成 RSA 密钥）。
++ 生成完成后，点击 Save public key 将公钥保存为 id_rsa.pub，再点击 Save private key 将私钥保存为 id_rsa。
++ 你也可以直接复制 Public key 区域的内容。
+
+## 公钥复制到树莓派
+同上
+
+## 配置 MobaXterm 使用私钥
++ 在 MobaXterm 的左侧，右键点击 Sessions > New session > SSH。
++ 在弹出的窗口中，输入树莓派的 IP 地址。
++ 在同一窗口的下方，找到 Advanced SSH settings。
+    + 勾选 Use private key。
+    + 选择你刚才保存的私钥文件（id_rsa）。
++ 点击 OK 保存设置。
