@@ -212,3 +212,17 @@ rs-enumerate-devices
     + 勾选 Use private key。
     + 选择你刚才保存的私钥文件（id_rsa）。
 + 点击 OK 保存设置。
+
+# ZerotTier使用（针对WSL, Windows可以直接软件连接）
++ 启动ZeroTier功能】
+    ```bash
+    sudo systemctl start zerotier-one
+    ```
++ 加入ZeroTier网络
+    ```bash
+    sudo zerotier-cli join <network_id> # network_id = 60ee7c034abdb3c0
+    ```
++ 检查连接状态
+    ```bash
+    sudo zerotier-cli info
+    ```

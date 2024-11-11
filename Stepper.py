@@ -17,7 +17,7 @@ class Stepper:
     def __init__(self, pins):
         # setup pins
         self.pins = pins
-        self.stepPin = self.pins[0]         # 29
+        self.stepPin = self.pins[0]         # 31,原来是29线断在里面了，换了一个
         self.directionPin = self.pins[1]    # 15
         self.enablePin = self.pins[2]       # 11
         self.endPin = self.pins[3]          # 16
@@ -57,7 +57,6 @@ class Stepper:
         preStatus = gpio.input(self.magPin)
         print("Original magnetic prestatus:{}".format(preStatus))
         print("docking status:{}".format(docking))
-        sleep(10)
         preResetStatus = gpio.input(self.resetPin)  # 1为高电平，未感应到磁铁
         preEndStatus = gpio.input(self.endPin)
         
@@ -84,7 +83,6 @@ class Stepper:
         
         # test
         print("The goal of step is {}".format(steps))
-        sleep(10)
         
         #reader = SimpleMFRC522()
         while keepGoing:
@@ -172,6 +170,12 @@ class Stepper:
                 if (sum(preMagStatus) == 0 and docking == False):
                     if (stepCounter>0.3*steps and docking == False):
                         print("detected stop")
+                        # for i in range(2000):  # 调整循环次数控制缓慢停止的程度
+                        #     waitTime += waitTime * 1.1  # 每次增加等待时间，降低速度
+                        #     gpio.output(self.stepPin, True)
+                        #     sleep(waitTime)
+                        #     gpio.output(self.stepPin, False)
+                        #     stepCounter += 1
                         keepGoing= False
                         return None
             #elif(preStatus == 0):

@@ -17,9 +17,9 @@ from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_d
 import scipy.io
 import traceback
 #Pig ID (999=empty crate)
-s_1=999
-s_2=999
-s_3=50089
+s_1=101
+s_2=102
+s_3=103
 s_4=50221
 s_5=50151
 s_6=50974
@@ -224,12 +224,12 @@ def streamSensor(pigID):
 def handle_stop(sign):
     print("Get in the handle_stop function.")
     if sign != None:
-        testStepper = Stepper([29,15,11 ,16,18,37])
+        testStepper = Stepper([31,15,11 ,16,18,37])
         print("Current sign for handle_stop function {}".format(sign))
         if sign == "docked":
             #move forward slightly
             print("docked2")
-            action = testStepper.step(3000, "left", 5, docking = False)
+            action = testStepper.step(3000, "left", 0.05, docking = False)
             handle_stop(action)
 
             
@@ -272,11 +272,11 @@ oldtime = datetime.datetime.now()
 
 #pigNumber=[933,596,710,767,936,765,685,766,594, 461,615,591]
 s=3               # Stall number
-testStepper = Stepper([29,15,11,16,18,37])         # the true pin number
+testStepper = Stepper([31,15,11,16,18,37])         # the true pin number
 GPIO.setmode(GPIO.BOARD)
 DIR = 15
 ENA = 11
-STEP =29
+STEP =31
 GPIO.setup(DIR,GPIO.OUT)
 GPIO.setup(ENA,GPIO.OUT)
 GPIO.setup(STEP,GPIO.OUT)
@@ -288,11 +288,8 @@ sleep(2)
 
 # when docking is set as true, it 
 # action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
-action = testStepper.step(5000, "left", 100, docking = True)
-print("########################################")
+action = testStepper.step(5000, "left", 0.5, docking = True)
 print(action)
-sleep(10)
-print("########################################")
 handle_stop(action)
 print("returning to dock")
 #camera_id,intrinsics,configurations,pipelines=get_sensor()
@@ -304,25 +301,27 @@ config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
 while True:
     t1 = datetime.datetime.now()
 
-    if t1.minute % 1 <= 3:             # 每十分钟拍一次
+    if t1.minute % 10 == 0:             # 每十分钟拍一次
+        start_time = time.time()
         for i in range (0,s):
             if i ==0:
                 #add it back
-                action = testStepper.step(30000, "left", 0.5, docking = False)
+                action = testStepper.step(30000, "left", 0.05, docking = False)
                 handle_stop(action)
                 print("moved to ", i+1)
             else:
-                action = testStepper.step(5000, "left", 0.5, docking = False)
+
+                action = testStepper.step(5000, "left", 0.05, docking = False)
                 # action = testStepper.step(110000, "left", 0.5, docking = False)
                 
                 # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
-                action = testStepper.step(30000, "left", 0.5, docking = False)
+                action = testStepper.step(30000, "left", 0.05, docking = False)
                 handle_stop(action)
                 print("moved to ", i+1)
 
             pigID = i
                     #initPYGAME(pigID+1)
-            if pigNumber[i]!=9998:
+            if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
                 try:
                     print("pigID is {}".format(pigID))
                     streamSensor(pigNumber[i])
@@ -345,6 +344,9 @@ while True:
                 if pigNumber[i]==999:
                     sleep(1)            
                 #capturePictures()
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f"Finish one imaging cycle in {total_time}")
                         
         action = testStepper.step(150000*24, "right", 1000, docking = True)
         handle_stop(action)
