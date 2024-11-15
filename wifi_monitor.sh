@@ -3,16 +3,20 @@
 # 定义 Python 邮件发送脚本路径
 PYTHON_SCRIPT="/home/pi/Desktop/ROBOTSOFTWARE/IP_email.py"
 
-# 记录上一次的网络状态，初始值为空
+# 记录上一次的网络状态和 IP 地址，初始值为空
 PREVIOUSLY_CONNECTED=false
+PREVIOUS_IP=""
 
+# 获取当前IP地址的函数
+get_current_ip() {
+    hostname -I | awk '{print $1}'  # 获取第一个IP地址
+}
 
 join_zerotier() {
     # 启动 ZeroTier 服务并加入网络（首次连接或重新连接后执行）
     sudo systemctl start zerotier-one
     sudo zerotier-cli join 60ee7c034abdb3c0
     sleep 10  # 等待几秒以确保 ZeroTier 网络已连接
-
 }
 
 # 定义检查网络连接并发送邮件的函数
@@ -21,14 +25,18 @@ check_and_connect_zerotier() {
     if ping -c 1 google.com &> /dev/null; then
         echo "WiFi connected."
 
-        # 如果上一次的状态是断开或是开机第一次运行，发送邮件
-        if [ "$PREVIOUSLY_CONNECTED" = false ]; then
-            echo "Connected to WiFi. Sending notification email..."
+        # 获取当前 IP 地址
+        CURRENT_IP=$(get_current_ip)
+
+        # 如果上一次的状态是断开或 IP 地址发生变化，发送邮件
+        if [ "$PREVIOUSLY_CONNECTED" = false ] || [ "$CURRENT_IP" != "$PREVIOUS_IP" ]; then
+            echo "Network state changed. Sending notification email..."
             python $PYTHON_SCRIPT  # 发送邮件
             PREVIOUSLY_CONNECTED=true  # 更新为连接状态
+            PREVIOUS_IP=$CURRENT_IP  # 更新记录的 IP 地址
 
-            # 启动 ZeroTier 
-	    join_zerotier
+            # 启动 ZeroTier
+            join_zerotier
         fi
         return 0  # 表示连接成功
     else
@@ -49,7 +57,8 @@ check_and_connect_zerotier() {
                 echo "Reconnected to WiFi. Sending notification email..."
                 python $PYTHON_SCRIPT  # 发送邮件
                 PREVIOUSLY_CONNECTED=true
-		join_zerotier
+                PREVIOUS_IP=$(get_current_ip)  # 更新记录的 IP 地址
+                join_zerotier
                 break
             fi
         done
@@ -74,4 +83,3 @@ while true; do
     echo "Checking network connection..."
     check_and_connect_zerotier
 done
-

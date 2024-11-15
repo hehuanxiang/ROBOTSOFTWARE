@@ -21,9 +21,13 @@ class Sensor:
 def main():
     # 初始化不同的传感器
     magnet_sensor = Sensor(pin=37, name="Magnet")
-    stop_sensor = Sensor(pin=16, name="Stop")
-    reset_sensor = Sensor(pin=18, name="Reset")
-
+    
+    # 2024年11月15日10点34分，调换stop和reset
+    # stop_sensor = Sensor(pin=16, name="Stop")
+    # reset_sensor = Sensor(pin=18, name="Reset")
+    stop_sensor = Sensor(pin=18, name="Stop")
+    reset_sensor = Sensor(pin=16, name="Reset")
+    
     # 测试每个传感器的状态
     i = 0
     while i < 10:
