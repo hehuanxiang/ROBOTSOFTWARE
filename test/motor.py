@@ -13,8 +13,8 @@ GPIO.setwarnings(False)
 DIR = 15
 STEP= 31
 ENA = 11
-resetPin = 18
-endPin = 16
+resetPin = 16
+endPin = 18
 stopPin = 37
 
 CW=1
@@ -72,15 +72,15 @@ def count_total_distance():
         sleep(0.000001)
         # sleep(1)
         GPIO.output(STEP,False)
+        magnetSensor = GPIO.input(stopPin)
+
         # sleep(0.0005)
         
         stepCount += 1
         
 
         print(stepCount)
-
-        print("Steps needed to leave reset point: {}\n".format(Step_to_leave_resetpoint))
-        print("Total steps is {}".format(stepCount))
+        
         
         if endSensor == 0:
             GPIO.output(ENA, True)

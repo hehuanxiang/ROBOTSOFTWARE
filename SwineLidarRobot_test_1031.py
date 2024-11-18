@@ -16,45 +16,8 @@ import time
 from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
 import scipy.io
 import traceback
-#Pig ID (999=empty crate)
-s_1=101
-s_2=102
-s_3=103
-s_4=50221
-s_5=50151
-s_6=50974
-s_7=50919
-s_8=50094
-s_9=50222
-s_10=50981
-s_11=50043
-s_12=50078
-s_13=50079
-s_14=50031
-s_15=50152
-s_16=55016
-s_17=55017
-s_18=55018
-s_19=55019
-s_20=55020
+import json
 
-pigNumber=[s_1,s_2,s_3,s_4] #s_5,s_6,s_7,s_8,s_9,s_10,s_11,s_12,s_13,s_14,s_15,s_16,s_17,s_18,s_19,s_20]
-#           1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20
-# Fix Python 2.x.999
-try: input = raw_input
-except NameError: pass
-
-
-
-#testStepper = Stepper([15,13,11,18,12]) #step,dir,ena,stop
-testStepper = Stepper([13,15,11 ,18,40,38])#140
-pipeline = rs.pipeline()
-config = rs.config()
-config.enable_stream(rs.stream.depth, 1024,768, rs.format.z16,30)
-config.enable_stream(rs.stream.color, 1920,1080, rs.format.bgr8,30)
-config.enable_stream(rs.stream.infrared,0,1024,768,rs.format.y8,30)
-config.enable_stream(rs.stream.infrared,1,1024,768,rs.format.y8,30)
-# config.enable_stream(rs.stream.infrared,2,848,480,rs.format.y8,30)
 class saveDataThread(threading.Thread):
     def __init__(self, threadID, frameset,i,path, PIG_ID,time_stamp,intr):
         threading.Thread.__init__(self)
@@ -128,9 +91,10 @@ class saveDataThread(threading.Thread):
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
-
-def streamSensor(pigID):
+def streamSensor(pigID, cameraPipeline, cameraConfig):
     
+    pipeline = cameraPipeline
+    config = cameraConfig
     pig_ID=pigID
     print("ID:"+str(pig_ID))
     path ="./Data/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
@@ -219,12 +183,10 @@ def streamSensor(pigID):
         thread1.stop()
     print("captured succeed, trying to save")
 
-
-
 def handle_stop(sign):
     print("Get in the handle_stop function.")
     if sign != None:
-        testStepper = Stepper([31,15,11 ,16,18,37])
+        testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin]) 
         print("Current sign for handle_stop function {}".format(sign))
         if sign == "docked":
             #move forward slightly
@@ -236,7 +198,7 @@ def handle_stop(sign):
         elif sign == "right_end":
             print("end3")
             #action = testStepper.step(5000, "right", 50, docking = False)
-            action = testStepper.step(10000000, "right", 50, docking = True)
+            action = testStepper.step(10000000, "right", 50, docking = True)        
             handle_stop(action)
 
 def get_sensor():
@@ -265,92 +227,98 @@ def get_sensor():
         configurations.append(config)
     return camera_id,intrinsics,configurations,pipelines
 
-
-oldtime = datetime.datetime.now()
-#distance = [ 107247, 51276 , 50000 , 50000 , 50000 , 50000 , 50000,50000,   50000, 50000,  50000, 50000 ] #13 stops
-#            1        2       3       4       5        6      7       8       9      10      11      12       13  
-
-#pigNumber=[933,596,710,767,936,765,685,766,594, 461,615,591]
-s=3               # Stall number
-testStepper = Stepper([31,15,11,16,18,37])         # the true pin number
-GPIO.setmode(GPIO.BOARD)
-DIR = 15
-ENA = 11
-STEP =31
-GPIO.setup(DIR,GPIO.OUT)
-GPIO.setup(ENA,GPIO.OUT)
-GPIO.setup(STEP,GPIO.OUT)
-GPIO.output(ENA,GPIO.HIGH)
-print("robot start in 2 sec, stop it now to manually move the robot")
-sleep(2)
-
-# testing the handle_stop
-
-# when docking is set as true, it 
-# action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
-action = testStepper.step(5000, "left", 0.5, docking = True)
-print(action)
-handle_stop(action)
-print("returning to dock")
-#camera_id,intrinsics,configurations,pipelines=get_sensor()
-pipeline = rs.pipeline()
-config = rs.config()
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
-config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
-while True:
-    t1 = datetime.datetime.now()
-
-    if t1.minute % 10 == 0:             # 每十分钟拍一次
-        start_time = time.time()
-        for i in range (0,s):
-            if i ==0:
-                #add it back
-                action = testStepper.step(30000, "left", 0.05, docking = False)
-                handle_stop(action)
-                print("moved to ", i+1)
-            else:
-
-                action = testStepper.step(5000, "left", 0.05, docking = False)
-                # action = testStepper.step(110000, "left", 0.5, docking = False)
-                
-                # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
-                action = testStepper.step(30000, "left", 0.05, docking = False)
-                handle_stop(action)
-                print("moved to ", i+1)
-
-            pigID = i
-                    #initPYGAME(pigID+1)
-            if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
-                try:
-                    print("pigID is {}".format(pigID))
-                    streamSensor(pigNumber[i])
-                except Exception as e:
-                    print("An error occurred:")
-                    traceback.print_exc()
-                
-                # except:     
-                #     print("failed to initialize camera")
-                #     sleep(3)
-                #     print("failed to initialize camera")
-                #     sleep(3)
-                #     pipeline = rs.pipeline()
-                #     config = rs.config()
-                #     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-                #     config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
-                #     config.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
+def setupCamera():
+    cameraPipeline = rs.pipeline()
+    cameraConfig = rs.config()
+    cameraConfig.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+    cameraConfig.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
+    cameraConfig.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
+    
+    return cameraPipeline, cameraConfig
 
 
-                if pigNumber[i]==999:
-                    sleep(1)            
-                #capturePictures()
-        end_time = time.time()
-        total_time = end_time - start_time
-        print(f"Finish one imaging cycle in {total_time}")
-                        
-        action = testStepper.step(150000*24, "right", 1000, docking = True)
-        handle_stop(action)
-        print("return to dock")
+if __name__ == "__mian__":
+    # 读取猪的id和点击配置PIN码
+    with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
+        farm_config = json.load(file)
+        
+    # 设置猪的ID
+    pigNumber = farm_config["pigNumber"]
+    
+    # 读取电机的控制以及各个sensor的pin码
+    pins = farm_config["pins"]
+
+    endPin = pins["endPin"]
+    resetPin = pins["resetPin"]
+    magnetPin = pins["magnetPin"]
+    DIR = pins["DIR"]
+    ENA = pins["ENA"]
+    STEP =pins["STEP"]
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(DIR,GPIO.OUT)
+    GPIO.setup(ENA,GPIO.OUT)
+    GPIO.setup(STEP,GPIO.OUT)
+    GPIO.output(ENA,GPIO.HIGH)
+    
+    oldtime = datetime.datetime.now()
+
+    testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin])         # the true pin number
+    print("robot start in 2 sec, stop it now to manually move the robot")
+    sleep(2)
+
+    # when docking is set as true, it 
+    # action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
+    action = testStepper.step(5000, "left", 0.1, docking = True)
+    print(action)
+    handle_stop(action)
+    print("returning to dock")
+    #camera_id,intrinsics,configurations,pipelines=get_sensor()
+  
+    # set up cammera
+    cameraPipeline, cameraConfig = setupCamera()
+    
+    stallNumber = farm_config["stallNumber"]        
+    while True:
+        t1 = datetime.datetime.now()
+
+        if t1.minute % 1 == 0:             # 每十分钟拍一次
+            start_time = time.time()
+            for i in range (0,stallNumber):
+                if i ==0:
+                    #add it back
+                    # action = testStepper.step(30000, "left", 0.05, docking = False)
+                    action = testStepper.step(100000, "left", 0.05, docking = False)     # 2024年11月15日13点32分
+                    handle_stop(action)
+                    print("moved to ", i+1)
+                else:
+
+                    action = testStepper.step(5000, "left", 0.05, docking = False)
+                    # action = testStepper.step(110000, "left", 0.5, docking = False)
+                    
+                    # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
+                    action = testStepper.step(100000, "left", 0.05, docking = False)
+                    handle_stop(action)
+                    print("moved to ", i+1)
+
+                pigID = i
+                        #initPYGAME(pigID+1)
+                if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
+                    try:
+                        print("pigID is {}".format(pigID))
+                        streamSensor(pigNumber[i], cameraPipeline, cameraConfig)
+                    except Exception as e:
+                        print("An error occurred:")
+                        traceback.print_exc()
 
 
+                    if pigNumber[i]==999:
+                        sleep(1)            
+                    #capturePictures()
+            end_time = time.time()
+            total_time = end_time - start_time
+            print(f"Finish one imaging cycle in {total_time}")
+                            
+            action = testStepper.step(150000*24, "right", 1000, docking = True)
+            handle_stop(action)
+            print("return to dock")
          
