@@ -226,3 +226,82 @@ rs-enumerate-devices
     ```bash
     sudo zerotier-cli info
     ```
+
+# 远程连接GitHub
+## 使用个人访问令牌 (PAT)（推荐）
+1. 生成个人访问令牌：
+
+   + 打开 GitHub 的 个人访问令牌设置页面。
+   + 点击 Generate new token（生成新令牌）。
+   + 选择所需的权限范围（例如，repo 访问权限用于管理仓库）。
+   + 生成后保存该令牌（令牌只会显示一次，记得保存）。
+2. 使用令牌替代密码： 进行 git push 时，输入以下内容：
+   ```bash
+    用户名: hehuanxiang
+    密码: <你的个人访问令牌>
+   ```
+3. 保存令牌以免每次输入（可选）： 执行以下命令保存认证信息：
+    ```bash
+    git config --global credential.helper store
+    ```
+
+## 使用 SSH 密钥
+1. 生成SSH秘钥：
+    ```bash
+    ssh-keygen -t rsa -b 4096 -C "你的邮箱@example.com"
+    ```
+   根据提示操作，建议直接回车，留空密钥密码。
+2. 添加 SSH 密钥到 GitHub：
+    + 查看生成的秘钥：
+        ```bash
+        cat ~/.ssh/id_rsa.pub
+        ```
+    + 复制输出的内容。
+    + 打开 GitHub 的 SSH 密钥设置页面。
+    + 点击 New SSH key，将公钥粘贴到文本框中并保存。
+3. 修改远程仓库地址为 SSH： 使用以下命令更改远程仓库地址：
+    ```bash
+    git remote set-url origin git@github.com:hehuanxiang/ROBOTSOFTWARE.git
+    ```
+4. 测试连接： 确认 SSH 配置是否成功：
+    ```bash
+    ssh -T git@github.com
+    ```
+5. 推送代码
+    ```bash
+    git push
+    ```
+
+# tmux使用
+1. 打开终端，启动一个新的tmux会话并命名：
+    ```bash
+    tmux new -s swine_lidar
+    ```
+    + swine_lidar 是会话名称，可以根据需要更改。
+2. 在tmux会话中运行python脚本并保存日志
+    ```bash
+    python /home/pi/Desktop/ROBOTSOFTWARE/SwineLidarRobot_test_1031.py > /home/pi/Desktop/ROBOTSOFTWARE/swine_lidar.log 2>&1
+    ```
+    + \> /home/pi/Desktop/ROBOTSOFTWARE/swine_lidar.log 将标准输出保存到日志文件。
+    + 2>&1 将标准错误重定向到标准输出，确保所有日志都保存到 swine_lidar.log 文件。
+3. 断开 tmux 会话
+    当脚本在 tmux 中运行时，你可以断开会话，让它继续在后台运行：
+
+    + 按下 Ctrl + B，然后松开，再按 D 键。
+    + 你会回到原来的终端，tmux 会话仍在后台运行。
+4. 查看实时日志
+    + 方法1 重新连接到 tmux 会话
+      + 查看所有正在运行的 tmux 会话：
+        ```bash
+        tmux ls
+        ```
+      + 重新连接到 swine_lidar 会话：
+        ```bash
+        tmux attach-session -t swine_lidar
+        ```
+    + 方法2 使用 tail -f 命令查看日志文件
+        ```bash
+        tail -f /home/pi/Desktop/ROBOTSOFTWARE/swine_lidar.log
+        ```
+        + tail -f 实时追踪日志文件的更新。
+        + 按 Ctrl + C 退出实时查看。

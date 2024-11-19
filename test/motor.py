@@ -1,18 +1,13 @@
 import RPi.GPIO as GPIO
 from time import sleep
 import time
-
-# sw5 = off
-# sw6 = on
-# sw7 = off
-# sw8 = on
-# Pulse/rec = 6400
+import argparse
 
 GPIO.setwarnings(False) 
 
 DIR = 15
 STEP= 31
-ENA = 11
+ENA = 7
 resetPin = 16
 endPin = 18
 stopPin = 37
@@ -37,6 +32,7 @@ resetSensor = 1
 endSensor = 1
 
 def define_distance_between_stall(distance):
+    # distance is the total distance between reset point and end point
     Steps_for_magenet = 0
     while True:
         GPIO.output(STEP,True)
@@ -70,17 +66,10 @@ def count_total_distance():
             
         GPIO.output(STEP,True)
         sleep(0.000001)
-        # sleep(1)
         GPIO.output(STEP,False)
-        magnetSensor = GPIO.input(stopPin)
-
-        # sleep(0.0005)
         
         stepCount += 1
-        
-
         print(stepCount)
-        
         
         if endSensor == 0:
             GPIO.output(ENA, True)
@@ -89,6 +78,22 @@ def count_total_distance():
     total_time = motor_end_time - motor_start_time
     
     print(f"Totla distance cost {total_time}")
+
+def back_to_dock():
+    # 设置电机旋转方向
+    GPIO.output(DIR,1)
+    print("Start to go back to the dock.")
+    while True:
+        resetSensor = GPIO.input(resetPin)
+            
+        GPIO.output(STEP,True)
+        sleep(0.000001)
+        # sleep(1)
+        GPIO.output(STEP,False)
+        if resetSensor == 0:
+            GPIO.output(ENA, True)
+            print("Back in the dock now.")
+            break
 
 def slow_brake_test():
     # 设置步进方向
@@ -119,7 +124,19 @@ def slow_brake_test():
 
 
 
-# slow_brake_test()
-count_total_distance()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Motor control script for Raspberry Pi.")
+    parser.add_argument("command", choices=["ahead", "back"],
+                        help="System go ahead to the end or back to the reset point.")
+    parser.add_argument("--distance", type=int, default=100, help="Total distance for counting the interval between two stall.")
 
+    args = parser.parse_args()
+    
+    try:
+        if args.command == "back":
+            back_to_dock()
+        elif args.command == "ahead":
+            count_total_distance()
+    finally:
+        GPIO.cleanup()
 

@@ -91,19 +91,23 @@ class saveDataThread(threading.Thread):
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
-def streamSensor(pigID, cameraPipeline, cameraConfig):
+def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
     
     pipeline = cameraPipeline
     config = cameraConfig
     pig_ID=pigID
     print("ID:"+str(pig_ID))
-    path ="./Data/Data_Estrus/" +"ID_"+ str(pigID) + "/"#+imgname
+    
+    # str.zfill(2)：
+    # 将 pigID 转换为字符串，不足两位时在前面填充 0。
+    # 示例：1.zfill(2) -> "01"。
+    path ="./Data/Data_Estrus_2024/" +"ID_" +str(stallId)+ "_" + str(pigID).zfill(2) + "/"#+imgname
 
     try:
         if not os.path.exists(path):
             os.makedirs(path)
     except:
-        path ="./Data/Data_Estrus_2022/" + "ID_"+str(pigID) + "/"#+imgname
+        path ="./Data/Data_Estrus_2024/" + "ID_" + str(stallId)+ "_" + str(pigID).zfill(2) + "/"#+imgname
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -237,7 +241,7 @@ def setupCamera():
     return cameraPipeline, cameraConfig
 
 
-if __name__ == "__mian__":
+if __name__ == "__main__":
     # 读取猪的id和点击配置PIN码
     with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
         farm_config = json.load(file)
@@ -281,7 +285,7 @@ if __name__ == "__mian__":
     while True:
         t1 = datetime.datetime.now()
 
-        if t1.minute % 1 == 0:             # 每十分钟拍一次
+        if t1.minute % 10 == 0:             # 每十分钟拍一次
             start_time = time.time()
             for i in range (0,stallNumber):
                 if i ==0:
@@ -305,7 +309,7 @@ if __name__ == "__mian__":
                 if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
                     try:
                         print("pigID is {}".format(pigID))
-                        streamSensor(pigNumber[i], cameraPipeline, cameraConfig)
+                        streamSensor(pigNumber[i], cameraPipeline, cameraConfig, pigID)
                     except Exception as e:
                         print("An error occurred:")
                         traceback.print_exc()
