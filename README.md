@@ -272,6 +272,17 @@ rs-enumerate-devices
     git push
     ```
 
+# Github小技巧
+取消已经加入git更新的文件
+1. 从Git更新中去除
+    ```bash
+    git rm --cached *.log
+    ```
+2. 提交变化
+    ```bash
+    git commit -m "Remove log files from tracking"
+    ```
+
 # tmux使用
 1. 打开终端，启动一个新的tmux会话并命名：
     ```bash

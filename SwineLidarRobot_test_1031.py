@@ -101,13 +101,13 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
     # str.zfill(2)：
     # 将 pigID 转换为字符串，不足两位时在前面填充 0。
     # 示例：1.zfill(2) -> "01"。
-    path ="./Data/Data_Estrus_2024/" +"ID_" +str(stallId)+ "_" + str(pigID).zfill(2) + "/"#+imgname
+    path ="./Data/Data_Estrus_2024/" +"ID_" +str(stallId).zfill(2)+ "_" + str(pigID) + "/"#+imgname
 
     try:
         if not os.path.exists(path):
             os.makedirs(path)
     except:
-        path ="./Data/Data_Estrus_2024/" + "ID_" + str(stallId)+ "_" + str(pigID).zfill(2) + "/"#+imgname
+        path ="./Data/Data_Estrus_2024/" + "ID_" + str(stallId).zfill(2) + "_" + str(pigID) + "/"#+imgname
 
         if not os.path.exists(path):
             os.makedirs(path)
