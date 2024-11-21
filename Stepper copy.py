@@ -6,9 +6,9 @@
 import sys
 from time import sleep
 import RPi.GPIO as gpio  # https://pypi.python.org/pypi/RPi.GPIO
+from evdev import InputDevice, categorize, ecodes
+import threading
 #from mfrc522 import SimpleMFRC522
-
-
 # import exitHandler #uncomment this and line 58 if using exitHandler
 
 class Stepper:
@@ -37,8 +37,49 @@ class Stepper:
         # set enable to high (i.e. power is NOT going to the motor)
         gpio.output(self.enablePin, True)
 
+        self.device = InputDevice('/dev/input/event1')      # 被监听的键盘所在位置
+        self.stop_motor = False  # 用于中止电机运行的标志
+        self.continue_motor = True  # 用于继续运行的标志
+        self.last_key = None  # 上一次按键
+        self.key_thread = threading.Thread(target=self._listen_keyboard, daemon=True)
+        self.key_thread.start()
+        
         #print("Stepper initialized (step=" + self.stepPin + ", direction=" + self.directionPin + ", enable=" + self.enablePin + ")")
 
+    def _listen_keyboard(self):
+        """
+        键盘监听线程，用于实时监控按键输入。
+        """
+        device = self.device
+        while True:
+            for event in device.read_loop():
+                if event.type == ecodes.EV_KEY:
+                    key_event = categorize(event)
+                    if key_event.keystate == 1:  # 按键按下事件
+                        current_key = key_event.keycode
+
+                        if current_key == 'KEY_DOWN':
+                            if self.last_key == 'KEY_DOWN':  # 连续两次向下键
+                                print("检测到连续两次 ↓ 下方向键，停止电机")
+                                self.stop_motor = True
+                                self.continue_motor = False
+                            else:
+                                self.last_key = 'KEY_DOWN'
+
+                        elif current_key == 'KEY_UP':
+                            if self.last_key == 'KEY_UP':  # 连续两次向上键
+                                print("检测到连续两次 ↑ 上方向键，继续电机")
+                                self.stop_motor = False
+                                self.continue_motor = True
+                            else:
+                                self.last_key = 'KEY_UP'
+
+                        elif current_key == 'KEY_ESC':
+                            print("检测到 ESC 键，退出程序")
+                            self.stop_motor = True
+                            self.continue_motor = False
+                            exit()
+    
     # clears GPIO settings
     def cleanGPIO(self):
         gpio.cleanup()
@@ -87,6 +128,11 @@ class Stepper:
         #reader = SimpleMFRC522()
         while keepGoing:
             
+            # 如果检测到停止信号，则中止电机运行
+            if self.stop_motor:
+                print("电机运行被用户中断")
+                return "stopped"
+            
             if (stepCounter > 2*steps and docking == False):
                 # 如果向右转到极限位置，返回 "right_end" 并进行对接（docking=True）。
                 if(dir=="right"):
@@ -115,14 +161,7 @@ class Stepper:
             gpio.output(self.stepPin, True)
             sleep(waitTime)     # 等待时间控制速度：sleep(waitTime) 用于调节脉冲之间的时间间隔。
             gpio.output(self.stepPin, False)
-            
-            
-            stepCounter += 1
-            
-            # test
-            # print("StepCounter is {}".format(stepCounter))
         
-
             # 状态缓冲：每次循环更新最近三次的传感器状态，便于判断状态变化。
             preMagStatus[0] = preMagStatus[1]
             preMagStatus[1] = preMagStatus[2]

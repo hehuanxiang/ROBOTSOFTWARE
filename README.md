@@ -213,6 +213,42 @@ rs-enumerate-devices
     + 选择你刚才保存的私钥文件（id_rsa）。
 + 点击 OK 保存设置。
 
+# WSL远程连接树莓派
+## 免密登录
++ 生成ssh密钥
+    ```bash
+    ssh-keygen
+    ```
++ 将公钥复制到远程服务器：
+    ```bash
+    ssh-copy-id username@remote_server
+    ```
+## 文件系统挂载
++ 安装 SSHFS
+    ```bash
+    sudo apt update
+    sudo apt install sshfs
+    ```
++ 创建本地挂载目录
+    ```bash
+    # ~/表示当前目录的主目录，通常是/home/username
+    mkdir -p ~/remote_server # ~/remote_server 为本地挂载点
+    ```
++ 挂载远程文件系统
+    ```bash
+    sshfs username@remote_server:/remote/path ~/remote_server
+    # 远程服务器上需要挂载的路径（如 /home/username）。
+    # sshfs pi@192.168.193.95:/home/pi /home/dayi/raspberrypi
+    ```
++ 验证挂载
+    ```bash
+    ls ~/remote_server
+    ```
++ 卸载挂载
+    ```bash
+    fusermount -u ~/remote_server
+    ```
+
 # ZerotTier使用（针对WSL, Windows可以直接软件连接）
 + 启动ZeroTier功能】
     ```bash
@@ -221,6 +257,7 @@ rs-enumerate-devices
 + 加入ZeroTier网络
     ```bash
     sudo zerotier-cli join <network_id> # network_id = 60ee7c034abdb3c0
+    sudo zerotier-cli join 60ee7c034abdb3c0
     ```
 + 检查连接状态
     ```bash
@@ -316,3 +353,33 @@ rs-enumerate-devices
         ```
         + tail -f 实时追踪日志文件的更新。
         + 按 Ctrl + C 退出实时查看。
+
+# sudo命令免密使用
+## 编辑sudoers文件
++ 运行
+    ```bash
+    sudo visudo
+    ```
+    visudo可以检查语法错误，避免保存损坏的配置
++ 在文件中找到以下部分（通常在末尾附近）：
+    ```bash
+    # User privilege specification
+    root    ALL=(ALL:ALL) ALL
+    ```
++ 添加一行，为你的用户名配置无密码的 sudo 权限：
+    ```bash
+    username ALL=(ALL) NOPASSWD: ALL
+    ```
+    + username：替换为你的实际用户名（可以通过 whoami 查看）。
+    + ALL：表示适用于所有主机。
+    + (ALL)：表示可以以任何用户的身份运行命令。
+    + NOPASSWD: ALL：表示运行所有命令时无需输入密码。
+## 保存并退出
++ Ctrl+O 保存修改。
++ Ctrl+X 退出编辑器。
+## 验证配置
++ 在终端中运行一个需要 sudo 的命令：
+    ```bash
+    sudo whoami
+    ```
+    无提示要求输入密码即可

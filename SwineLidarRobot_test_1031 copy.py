@@ -17,6 +17,8 @@ from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_d
 import scipy.io
 import traceback
 import json
+from motorControl import MotorControl
+from evdev import InputDevice, categorize, ecodes
 
 class saveDataThread(threading.Thread):
     def __init__(self, threadID, frameset,i,path, PIG_ID,time_stamp,intr):
@@ -272,57 +274,70 @@ if __name__ == "__main__":
 
     # when docking is set as true, it 
     # action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
-    action = testStepper.step(5000, "left", 0.1, docking = True)
-    print(action)
-    handle_stop(action)
+    # action = testStepper.step(5000, "left", 0.1, docking = True)
+    
+    # print(action)
+    # handle_stop(action)
     print("returning to dock")
     #camera_id,intrinsics,configurations,pipelines=get_sensor()
   
     # set up cammera
     cameraPipeline, cameraConfig = setupCamera()
     
-    stallNumber = farm_config["stallNumber"]        
+    stallNumber = farm_config["stallNumber"]       
+    
+    motorControl = MotorControl(DIR, STEP, ENA, resetPin, endPin, magnetPin)
     while True:
-        t1 = datetime.datetime.now()
+        # 未检测到键盘输入停止，则继续运行
+        if testStepper.continue_motor:
+            t1 = datetime.datetime.now()
 
-        if t1.minute % 10 == 0:             # 每十分钟拍一次
-            start_time = time.time()
-            for i in range (0,stallNumber):
-                if i ==0:
-                    #add it back
-                    # action = testStepper.step(30000, "left", 0.05, docking = False)
-                    action = testStepper.step(100000, "left", 0.05, docking = False)     # 2024年11月15日13点32分
-                    handle_stop(action)
-                    print("moved to ", i+1)
-                else:
+            if t1.minute % 1 == 0:             # 每十分钟拍一次
+                start_time = time.time()
+                for i in range (0,stallNumber):
+                    if i ==0:
+                        #add it back
+                        # action = testStepper.step(30000, "left", 0.05, docking = False)
+                        action = testStepper.step(100000, "left", 0.05, docking = False)     # 2024年11月15日13点32分
+                        if action == "stopped":
+                            print("电机已暂停，等待用户恢复...")
+                            motorControl.back_to_dock()
+                            break
+                        
+                        handle_stop(action)
+                        print("moved to ", i+1)
+                    else:
 
-                    action = testStepper.step(5000, "left", 0.05, docking = False)
-                    # action = testStepper.step(110000, "left", 0.5, docking = False)
+                        action = testStepper.step(5000, "left", 0.05, docking = False)
+                        # action = testStepper.step(110000, "left", 0.5, docking = False)
+                        
+                        # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
+                        action = testStepper.step(100000, "left", 0.05, docking = False)
+                        handle_stop(action)
+                        print("moved to ", i+1)
+                
                     
-                    # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
-                    action = testStepper.step(100000, "left", 0.05, docking = False)
-                    handle_stop(action)
-                    print("moved to ", i+1)
-
-                pigID = i
-                        #initPYGAME(pigID+1)
-                if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
-                    try:
-                        print("pigID is {}".format(pigID))
-                        streamSensor(pigNumber[i], cameraPipeline, cameraConfig, pigID)
-                    except Exception as e:
-                        print("An error occurred:")
-                        traceback.print_exc()
+                    pigID = i
+                            #initPYGAME(pigID+1)
+                    if pigNumber[i]!=9998:          # 设定某个为不拍摄的id，可以补齐周期，比如总共有20头猪
+                        try:
+                            print("pigID is {}".format(pigID))
+                            streamSensor(pigNumber[i], cameraPipeline, cameraConfig, pigID)
+                        except Exception as e:
+                            print("An error occurred:")
+                            traceback.print_exc()
 
 
-                    if pigNumber[i]==999:
-                        sleep(1)            
-                    #capturePictures()
-            end_time = time.time()
-            total_time = end_time - start_time
-            print(f"Finish one imaging cycle in {total_time}")
-                            
-            action = testStepper.step(150000*24, "right", 1000, docking = True)
-            handle_stop(action)
-            print("return to dock")
-         
+                        if pigNumber[i]==999:
+                            sleep(1)            
+                        #capturePictures()
+                end_time = time.time()
+                total_time = end_time - start_time
+                print(f"Finish one imaging cycle in {total_time}")
+                                
+                action = testStepper.step(150000*24, "right", 1000, docking = True)
+                handle_stop(action)
+                print("return to dock")
+        else:
+            # print("电机已暂停...")
+            time.sleep(1)

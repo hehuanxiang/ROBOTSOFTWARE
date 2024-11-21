@@ -12,9 +12,6 @@ resetPin = 16
 endPin = 18
 stopPin = 37
 
-CW=1
-CCW=0
-
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(DIR,GPIO.OUT)
 GPIO.setup(STEP,GPIO.OUT)
