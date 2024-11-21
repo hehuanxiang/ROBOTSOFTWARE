@@ -187,24 +187,6 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
         thread1.stop()
     print("captured succeed, trying to save")
 
-def handle_stop(sign):
-    print("Get in the handle_stop function.")
-    if sign != None:
-        testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin]) 
-        print("Current sign for handle_stop function {}".format(sign))
-        if sign == "docked":
-            #move forward slightly
-            print("docked2")
-            action = testStepper.step(3000, "left", 0.05, docking = False)
-            handle_stop(action)
-
-            
-        elif sign == "right_end":
-            print("end3")
-            #action = testStepper.step(5000, "right", 50, docking = False)
-            action = testStepper.step(10000000, "right", 50, docking = True)        
-            handle_stop(action)
-
 def get_sensor():
     ctx = rs.context()
         #print(ctx)
@@ -240,6 +222,23 @@ def setupCamera():
     
     return cameraPipeline, cameraConfig
 
+def handle_stop(sign):
+    print("Get in the handle_stop function.")
+    if sign != None:
+        testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin]) 
+        print("Current sign for handle_stop function {}".format(sign))
+        if sign == "docked":
+            #move forward slightly
+            print("docked2")
+            action = testStepper.step(3000, "forward", 0.05, docking = False)
+            handle_stop(action)
+
+            
+        elif sign == "right_end":
+            print("end3")
+            #action = testStepper.step(5000, "right", 50, docking = False)
+            action = testStepper.step(10000000, "back", 50, docking = True)        
+            handle_stop(action)
 
 if __name__ == "__main__":
     # 读取猪的id和点击配置PIN码
@@ -271,8 +270,8 @@ if __name__ == "__main__":
     sleep(2)
 
     # when docking is set as true, it 
-    # action = testStepper.step(110000*24, "left", 100, docking = True)    # original one
-    action = testStepper.step(5000, "left", 0.1, docking = True)
+    # action = testStepper.step(110000*24, "forward", 100, docking = True)    # original one
+    action = testStepper.step(40000 * 10, "forward", 0.1, docking = True)
     print(action)
     handle_stop(action)
     print("returning to dock")
@@ -290,17 +289,17 @@ if __name__ == "__main__":
             for i in range (0,stallNumber):
                 if i ==0:
                     #add it back
-                    # action = testStepper.step(30000, "left", 0.05, docking = False)
-                    action = testStepper.step(100000, "left", 0.05, docking = False)     # 2024年11月15日13点32分
+                    # action = testStepper.step(30000, "forward", 0.05, docking = False)
+                    action = testStepper.step(100000, "forward", 0.05, docking = False)     # 2024年11月15日13点32分
                     handle_stop(action)
                     print("moved to ", i+1)
                 else:
 
-                    action = testStepper.step(5000, "left", 0.05, docking = False)
-                    # action = testStepper.step(110000, "left", 0.5, docking = False)
+                    action = testStepper.step(5000, "forward", 0.05, docking = False)
+                    # action = testStepper.step(110000, "forward", 0.5, docking = False)
                     
                     # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
-                    action = testStepper.step(100000, "left", 0.05, docking = False)
+                    action = testStepper.step(100000, "forward", 0.05, docking = False)
                     handle_stop(action)
                     print("moved to ", i+1)
 
@@ -322,7 +321,7 @@ if __name__ == "__main__":
             total_time = end_time - start_time
             print(f"Finish one imaging cycle in {total_time}")
                             
-            action = testStepper.step(150000*24, "right", 1000, docking = True)
+            action = testStepper.step(150000*24, "back", 1000, docking = True)
             handle_stop(action)
             print("return to dock")
          

@@ -2,16 +2,24 @@ import RPi.GPIO as GPIO
 from time import sleep
 import time
 import argparse
+import json
+
+with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
+        farm_config = json.load(file)
+        
+
+
+# 读取电机的控制以及各个sensor的pin码
+pins = farm_config["pins"]
+
+endPin = pins["endPin"]
+resetPin = pins["resetPin"]
+stopPin = pins["magnetPin"]
+DIR = pins["DIR"]
+ENA = pins["ENA"]
+STEP =pins["STEP"]
 
 GPIO.setwarnings(False) 
-
-DIR = 15
-STEP= 31
-ENA = 7
-resetPin = 16
-endPin = 18
-stopPin = 37
-
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(DIR,GPIO.OUT)
 GPIO.setup(STEP,GPIO.OUT)
@@ -27,6 +35,7 @@ GPIO.output(ENA,GPIO.LOW)
 
 resetSensor = 1
 endSensor = 1
+stopSensor = 1
 
 def define_distance_between_stall(distance):
     # distance is the total distance between reset point and end point
@@ -44,7 +53,49 @@ def define_distance_between_stall(distance):
         if endSensor == 0:
             GPIO.output(ENA, True)
             break   
+        
+def get_steps():
+    """
+    Caculate the needed steps between resetponint and the first magnet point, 
+    steps between the first magenet point and the second one
     
+    Args:
+    
+    Returns:
+        int: steps between resetponint and the first magnet point
+        int: steps between the first magenet point and the second one
+    """
+    stepCount = 0
+    preReset = 0
+    preStop = 0
+    # 设置电机旋转方向
+    GPIO.output(DIR,0)
+    
+    while True:
+        resetSensor = GPIO.input(resetPin)
+        stopSensor = GPIO.input(stopPin)
+        if resetSensor == 0:
+            stepCount = 0
+            print("Start to count the step")
+            Steps_resetpoint_to_firstStall += 1
+            preReset = 1
+        
+        GPIO.output(STEP,True)
+        sleep(0.000001)
+        GPIO.output(STEP,False)
+        
+        stepCount += 1
+        
+        if stopSensor == 0 and preReset ==1:
+            Steps_resetpoint_to_firstStall = stepCount
+            preStop = 1
+        elif stopSensor == 0 and preStop ==1:
+            Steps_firstStall_to_sencond = stepCount - Steps_resetpoint_to_firstStall
+            GPIO.output(ENA, True)
+            break
+    
+    return Steps_resetpoint_to_firstStall, Steps_firstStall_to_sencond
+
 def count_total_distance():
     stepCount = 0
     Step_to_leave_resetpoint = 0

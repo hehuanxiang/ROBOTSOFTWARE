@@ -60,16 +60,16 @@ class Stepper:
         preResetStatus = gpio.input(self.resetPin)  # 1为高电平，未感应到磁铁
         preEndStatus = gpio.input(self.endPin)
         
-        # set the output to true for left and false for right
-        turnLeft = False            # 将motor的初始点位设置为低电平，则电机将逆时针旋转，整个系统将后退
-        if (dir == 'right'):
-            turnLeft = True         # 将motor的初始点位设置为高电平，则电机将顺时针旋转，整个系统将前进
-        elif (dir != 'left'):
+        # forward, direction == False; back, direction == True
+        direction = False            
+        if (dir == 'back'):
+            direction = True         
+        elif (dir != 'forward'):
             print("STEPPER ERROR: no direction supplied")
             return True
         
         # set the direction for spining
-        gpio.output(self.directionPin, turnLeft)
+        gpio.output(self.directionPin, direction)
 
         stepCounter = 0
         keepGoing = True
@@ -87,27 +87,29 @@ class Stepper:
         #reader = SimpleMFRC522()
         while keepGoing:
             
+            # docking判断当前是否要回到reset点，
+            # false意味着是要去每一个stall，如果超过了预设步数的两倍，
+            # 意味着中间某个stall的磁铁失效了
+            # 这个应该是用于来回拍的
             if (stepCounter > 2*steps and docking == False):
                 # 如果向右转到极限位置，返回 "right_end" 并进行对接（docking=True）。
-                if(dir=="right"):
+                if(dir=="back"):
                     # 走到了最右边的尽头，即前进的尽头
                     print("right dead end")
-                    turnLeft=False
+                    direction=False
                     stepCounter=0
                     steps=800000
                     docking=True
                     return "right_end"
-                elif(dir=="left"):
-                    # 如果向左旋转到极限，返回 "docked"，表示对接成功。
-                    # 走到了最左边的尽头，起始点附近
+                elif(dir=="forward"):
                     print("left dead end")
-                    turnLeft=False
+                    direction=False
                     stepCounter=0
                     steps=50000
                     docking=True
                     return "docked"
                 
-                gpio.output(self.directionPin, turnLeft)
+                gpio.output(self.directionPin, direction)
                 sleep(1)
                 #input('Press <ENTER> to continue')
             
@@ -141,17 +143,17 @@ class Stepper:
             #print(gpio.input(self.magPin))
             if sum(endStatus) == 0:
                 sleep(1)
-                turnLeft=False          # 到了终点，电机应该停止前进，True为前进
+                direction=False          # 到了终点，电机应该停止前进，True为前进
                 steps=1000000
                 docking = True
                 print("Hit end, returning to dock1")
                 return "right_end"
             if(sum(resetStatus)== 0 and preResetStatus==1 and docking == True):
                 sleep(1)
-                turnLeft=True
+                direction=True
                 steps=220000
                 stepCounter=0
-                gpio.output(self.directionPin, turnLeft)
+                gpio.output(self.directionPin, direction)
                 preResetStatus=0
                 print("reset needed1")
                 docking=False
