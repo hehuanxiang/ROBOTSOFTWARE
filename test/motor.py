@@ -177,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("command", choices=["ahead", "back"],
                         help="System go ahead to the end or back to the reset point.")
     parser.add_argument("--distance", type=int, default=100, help="Total distance for counting the interval between two stall.")
+    parser.add_argument("step", action="store_true", help = "Caculate the needed steps between resetponint and the first magnet point, steps between the first magenet point and the second one")
 
     args = parser.parse_args()
     
@@ -185,6 +186,8 @@ if __name__ == "__main__":
             back_to_dock()
         elif args.command == "ahead":
             count_total_distance()
+        elif args.step:
+            get_steps()
     finally:
         GPIO.cleanup()
 
