@@ -56,44 +56,67 @@ def define_distance_between_stall(distance):
         
 def get_steps():
     """
-    Caculate the needed steps between resetponint and the first magnet point, 
-    steps between the first magenet point and the second one
-    
-    Args:
+    Calculate the needed steps between the reset point and the first magnet point, 
+    and the steps between the first and second magnet points.
     
     Returns:
-        int: steps between resetponint and the first magnet point
-        int: steps between the first magenet point and the second one
+        int: Steps between the reset point and the first magnet point
+        int: Steps between the first and second magnet points
+        
+    Steps from reset to first stall: 78012
+    Steps from first to second stall: 40801
     """
     stepCount = 0
     Steps_resetpoint_to_firstStall = 0
-    preReset = 0
-    preStop = 0
-    # 设置电机旋转方向
-    GPIO.output(DIR,0)
+    Steps_firstStall_to_second = 0
+    preReset = False
+    preStop = False
+    
+    # 防抖时间
+    debounce_time = 10  # 50ms，具体值可根据磁场特性调整
+    
+    # Set motor rotation direction
+    GPIO.output(DIR, 0)
     
     while True:
         resetSensor = GPIO.input(resetPin)
         stopSensor = GPIO.input(stopPin)
-        if resetSensor == 0:
-            stepCount = 0
-            print("Start to count the step")
-            Steps_resetpoint_to_firstStall += 1
-            preReset = 1
         
-        GPIO.output(STEP,True)
-        sleep(0.000001)
-        GPIO.output(STEP,False)
+        # Check for reset point
+        if resetSensor == 0 and not preReset:
+            stepCount = 0
+            print("Start to count the steps")
+            preReset = True
+
+        # Motor step signal
+        GPIO.output(STEP, True)
+        sleep(0.00001)  # Adjust delay as per motor specs
+        GPIO.output(STEP, False)
         
         stepCount += 1
-        
-        if stopSensor == 0 and preReset ==1:
+        print(stepCount)
+
+        # Check for first stop point
+        if stopSensor == 0 and preReset and not preStop:
             Steps_resetpoint_to_firstStall = stepCount
-            preStop = 1
-        elif stopSensor == 0 and preStop ==1:
-            Steps_firstStall_to_sencond = stepCount - Steps_resetpoint_to_firstStall
-            GPIO.output(ENA, True)
-            break
+            print(f"Steps from reset to first stall: {Steps_resetpoint_to_firstStall}")
+            preStop = True
+
+        # Check for second stop point
+        elif stopSensor == 0 and preStop:
+            Steps_firstStall_to_second = stepCount - Steps_resetpoint_to_firstStall
+            if Steps_firstStall_to_second > 10000:
+                Steps_firstStall_to_second = stepCount - Steps_resetpoint_to_firstStall
+                print(f"Steps from reset to first stall: {Steps_resetpoint_to_firstStall}")
+                print(f"Steps from first to second stall: {Steps_firstStall_to_second}")
+                GPIO.output(ENA, True)  # Disable motor driver
+                break
+
+    # Release GPIO resources if needed
+    GPIO.cleanup()
+
+    return Steps_resetpoint_to_firstStall, Steps_firstStall_to_second
+
     
     return Steps_resetpoint_to_firstStall, Steps_firstStall_to_sencond
 

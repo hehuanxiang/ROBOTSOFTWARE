@@ -271,10 +271,7 @@ if __name__ == "__main__":
 
     # when docking is set as true, it 
     # action = testStepper.step(110000*24, "forward", 100, docking = True)    # original one
-    action = testStepper.step(40000 * 10, "forward", 0.1, docking = True)
-    print(action)
-    handle_stop(action)
-    print("returning to dock")
+    
     #camera_id,intrinsics,configurations,pipelines=get_sensor()
   
     # set up cammera
@@ -283,8 +280,13 @@ if __name__ == "__main__":
     stallNumber = farm_config["stallNumber"]        
     while True:
         t1 = datetime.datetime.now()
-
-        if t1.minute % 10 == 0:             # 每十分钟拍一次
+        
+        # make sure system start from the dock
+        action = testStepper.step(40000 * 10, "forward", 0.1, docking = True)
+        print(action)
+        print("Back in the dock")
+    
+        if t1.minute % 1 == 0:             # 每十分钟拍一次
             start_time = time.time()
             for i in range (0,stallNumber):
                 if i ==0:
