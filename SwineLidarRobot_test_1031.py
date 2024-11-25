@@ -50,7 +50,7 @@ class saveDataThread(threading.Thread):
             depth_image = np.asanyarray(depth_frame.get_data())
             color_image = np.asanyarray(color_frame.get_data())
             ir_image = np.asanyarray(ir_frame.get_data())
-        
+
             colorized=colorizer.process(ir_frame)
             index=(self.i)
             index=j
@@ -58,7 +58,7 @@ class saveDataThread(threading.Thread):
             XX=np.zeros((480,640))
             YY=np.zeros((480,640))
             ZZ=np.zeros((480,640))
-       
+
             coverage = [0]*64
             for y in range(480):
                 for x in range(480):
@@ -67,8 +67,8 @@ class saveDataThread(threading.Thread):
                     XX[y,x] = X
                     YY[y,x] = Y
                     ZZ[y,x] = Z
-        
-        
+
+
             obj=np.stack((XX,YY,ZZ))
             if not os.path.exists(path+"DM"):
                 os.makedirs(path+"DM")
@@ -79,7 +79,7 @@ class saveDataThread(threading.Thread):
                 os.makedirs(path+"RGB")
             if not os.path.exists(path+"IR"):
                 os.makedirs(path+"IR")
-                
+
             #points.export_to_ply(path+"pcl/"+name+".ply", color_frame)
             matfile=path+"DM/"+ name + ".mat"
             scipy.io.savemat(matfile, mdict={'out': obj}, oned_as='row')
@@ -92,12 +92,12 @@ class saveDataThread(threading.Thread):
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
 def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
-    
+
     pipeline = cameraPipeline
     config = cameraConfig
     pig_ID=pigID
     print("ID:"+str(pig_ID))
-    
+
     # str.zfill(2)：
     # 将 pigID 转换为字符串，不足两位时在前面填充 0。
     # 示例：1.zfill(2) -> "01"。
@@ -133,7 +133,7 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
     # The "align_to" is the stream type to which we plan to align depth frames.
         align_to = rs.stream.depth
         align = rs.align(align_to)
-        
+
         tt = time.monotonic()
         t = datetime.datetime.now()
 
@@ -173,10 +173,10 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
                 frameset.append(aligned_frames)
             #thread1=saveDataThread((x+interval)/interval, aligned_frames,int(x/interval))
             #thread1.start()
-            
+
             #saveData(aligned_frames, x/30)
         #print(x)
-       
+
     finally:   
         pipeline.stop()
     try:
@@ -197,7 +197,7 @@ def get_sensor():
     for d in ctx.devices:
         print(d.get_info(rs.camera_info.serial_number))
         camera_id.append(d.get_info(rs.camera_info.serial_number))
-            
+
         pipeline = rs.pipeline()
         config = rs.config()
         config.enable_device(d.get_info(rs.camera_info.serial_number))
@@ -219,7 +219,7 @@ def setupCamera():
     cameraConfig.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
     cameraConfig.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)
     cameraConfig.enable_stream(rs.stream.infrared,0,640,480,rs.format.y8,30)
-    
+
     return cameraPipeline, cameraConfig
 
 def handle_stop(sign):
@@ -232,7 +232,6 @@ def handle_stop(sign):
             print("docked2")
             action = testStepper.step(3000, "forward", 0.05, docking = False)
             handle_stop(action)
-
             
         elif sign == "right_end":
             print("end3")
@@ -244,10 +243,10 @@ if __name__ == "__main__":
     # 读取猪的id和点击配置PIN码
     with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
         farm_config = json.load(file)
-        
+
     # 设置猪的ID
     pigNumber = farm_config["pigNumber"]
-    
+
     # 读取电机的控制以及各个sensor的pin码
     pins = farm_config["pins"]
 
@@ -262,7 +261,7 @@ if __name__ == "__main__":
     GPIO.setup(ENA,GPIO.OUT)
     GPIO.setup(STEP,GPIO.OUT)
     GPIO.output(ENA,GPIO.HIGH)
-    
+
     oldtime = datetime.datetime.now()
 
     testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin])         # the true pin number
@@ -271,21 +270,19 @@ if __name__ == "__main__":
 
     # when docking is set as true, it 
     # action = testStepper.step(110000*24, "forward", 100, docking = True)    # original one
-    
+    action = testStepper.step(40000 * 10, "forward", 0.1, docking = True)
+    print(action)
+    handle_stop(action)
+    print("returning to dock")
     #camera_id,intrinsics,configurations,pipelines=get_sensor()
-  
+
     # set up cammera
     cameraPipeline, cameraConfig = setupCamera()
-    
+
     stallNumber = farm_config["stallNumber"]        
     while True:
         t1 = datetime.datetime.now()
-        
-        # make sure system start from the dock
-        action = testStepper.step(40000 * 10, "forward", 0.1, docking = True)
-        print(action)
-        print("Back in the dock")
-    
+
         if t1.minute % 1 == 0:             # 每十分钟拍一次
             start_time = time.time()
             for i in range (0,stallNumber):
@@ -299,7 +296,7 @@ if __name__ == "__main__":
 
                     action = testStepper.step(5000, "forward", 0.05, docking = False)
                     # action = testStepper.step(110000, "forward", 0.5, docking = False)
-                    
+
                     # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
                     action = testStepper.step(100000, "forward", 0.05, docking = False)
                     handle_stop(action)
@@ -322,8 +319,7 @@ if __name__ == "__main__":
             end_time = time.time()
             total_time = end_time - start_time
             print(f"Finish one imaging cycle in {total_time}")
-                            
+
             action = testStepper.step(150000*24, "back", 1000, docking = True)
             handle_stop(action)
             print("return to dock")
-         

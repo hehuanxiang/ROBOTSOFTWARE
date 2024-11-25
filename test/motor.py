@@ -77,7 +77,7 @@ def get_steps():
     
     # Set motor rotation direction
     GPIO.output(DIR, 0)
-    
+    waitTime = 0.00001 / 0.05
     while True:
         resetSensor = GPIO.input(resetPin)
         stopSensor = GPIO.input(stopPin)
@@ -90,7 +90,7 @@ def get_steps():
 
         # Motor step signal
         GPIO.output(STEP, True)
-        sleep(0.00001)  # Adjust delay as per motor specs
+        sleep(waitTime)  # Adjust delay as per motor specs
         GPIO.output(STEP, False)
         
         stepCount += 1
