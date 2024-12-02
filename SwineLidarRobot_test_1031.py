@@ -322,4 +322,4 @@ if __name__ == "__main__":
 
             action = testStepper.step(150000*24, "back", 1000, docking = True)
             handle_stop(action)
-            print("return to dock")
+            print("Return to dock at: ", t1)

@@ -117,9 +117,6 @@ def get_steps():
 
     return Steps_resetpoint_to_firstStall, Steps_firstStall_to_second
 
-    
-    return Steps_resetpoint_to_firstStall, Steps_firstStall_to_sencond
-
 def count_total_distance():
     stepCount = 0
     Step_to_leave_resetpoint = 0
@@ -194,15 +191,97 @@ def slow_brake_test():
     finally:
         GPIO.cleanup()
 
+def test_stop():
+    """
+    Test each stop point whether works
+    """
+    stepCount = 0
+    stall_id = 0
+    preReset = False
+    
+    # 防抖时间
+    debounce_time = 10  # 50ms，具体值可根据磁场特性调整
+    
+    # Set motor rotation direction
+    GPIO.output(DIR, 0)
+    waitTime = 0.00001 / 0.05
+    while True:
+        resetSensor = GPIO.input(resetPin)
+        stopSensor = GPIO.input(stopPin)
+        endSensor = GPIO.input(endPin)
+        
+        # Check for reset point
+        if resetSensor == 0 and not preReset:
+            stepCount = 0
+            print("Start to count the steps")
+            preReset = True
 
+        # Motor step signal
+        GPIO.output(STEP, True)
+        sleep(waitTime)  # Adjust delay as per motor specs
+        GPIO.output(STEP, False)
+        
+        stepCount += 1
 
+        # Check for first stop point
+        if stopSensor == 0 and preReset:
+            if stepCount > 10000:
+                print(f"Steps from reset to first stall: {stepCount}")
+                print(f'The NO.{stall_id} step point works.')
+                stepCount = 0
+                stall_id += 1
+                preReset = False
+                print(preReset)
+        # Check for second stop point
+        elif stopSensor == 0:
+            if stepCount > 10000:
+                print(f"Steps from NO.{stall_id - 1} to NO.{stall_id}: {stepCount}")
+                print(f'The NO.{stall_id} step point works.')
+                
+                stepCount = 0
+                stall_id += 1
+        if endSensor == 0:
+            GPIO.output(ENA, True)      # Disable motor driver
+            break  
+    # Release GPIO resources if needed
+    GPIO.cleanup()
+    
+def reset():
+    """
+    wherever the system is, go back to the dock
+    """
+    GPIO.output(DIR, 0)
+    waitTime = 0.00001 / 1
+    preStop = 0
+    stepCount = 0
+    while True:
+        stopSensor = GPIO.input(stopPin)
+        endSensor = GPIO.input(endPin)
+        
+        # Motor step signal
+        GPIO.output(STEP, True)
+        sleep(waitTime)  # Adjust delay as per motor specs
+        GPIO.output(STEP, False)
+        
+        stepCount += 1
+        if stopSensor == 0:
+            if stepCount > 10000:
+                print(f"Get to the first stall by {stepCount}")
+                stepCount = 0
+                preStop = 1
+        
+        if preStop or endSensor == 0:
+            back_to_dock()
+            break
+
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Motor control script for Raspberry Pi.")
-    parser.add_argument("command", nargs="?", choices=["ahead", "back"],
+    parser.add_argument("command", nargs="?", choices=["ahead", "back", "reset", "test"],
                         help="System go ahead to the end or back to the reset point.")
     parser.add_argument("--distance", type=int, default=100, help="Total distance for counting the interval between two stall.")
     parser.add_argument("--step", action="store_true", help = "Caculate the needed steps between resetponint and the first magnet point, steps between the first magenet point and the second one")
-
+    parser.add_argument("--test", action="store_true", help = "Test each stop point whether works")
     args = parser.parse_args()
     
     try:
@@ -210,8 +289,13 @@ if __name__ == "__main__":
             back_to_dock()
         elif args.command == "ahead":
             count_total_distance()
+        elif args.command == "reset":
+            reset()
         if args.step:
             get_steps()
+        if args.test:
+            test_stop()
+
     finally:
         GPIO.cleanup()
 

@@ -383,3 +383,35 @@ rs-enumerate-devices
     sudo whoami
     ```
     无提示要求输入密码即可
+
+# 写入树莓派开机自启动的程序
++ 创建一个服务文件：
+    ```bash
+    sudo nano /etc/systemd/system/motor.service
+    ```
++ 添加一下内容到文件中：
+    ```ini
+    ; INI 文件是一种 初始化配置文件，通常用于存储程序或系统的配置信息。
+    ; 文件的后缀名通常是 .ini，但并非必须如此。这种文件的格式简单易读，以 键值对 和 分节标题 为核心结构。
+    [Unit]  ; 分节标题，用[]包围
+    Description=Motor Reset Script
+    After=network.target
+
+    [Service]
+    ExecStart=/usr/bin/python3 /home/pi/Desktop/ROBOTSOFTWARE/test/motor.py reset
+    WorkingDirectory=/home/pi/Desktop/ROBOTSOFTWARE/test
+    Restart=always
+    User=pi
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
++ 保存并退出（Ctrl + O, Ctrl + X）
++ 检查服务状态：
+    ```bash
+    sudo systemctl status motor.service
+    ```
++ 重启验证
+    ```bash
+    sudo reboot
+    ```
