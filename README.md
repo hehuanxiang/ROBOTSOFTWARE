@@ -400,7 +400,7 @@ rs-enumerate-devices
     [Service]
     ExecStart=/usr/bin/python3 /home/pi/Desktop/ROBOTSOFTWARE/test/motor.py reset
     WorkingDirectory=/home/pi/Desktop/ROBOTSOFTWARE/test
-    Restart=always
+    Restart=no
     User=pi
 
     [Install]

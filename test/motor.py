@@ -204,7 +204,7 @@ def test_stop():
     
     # Set motor rotation direction
     GPIO.output(DIR, 0)
-    waitTime = 0.00001 / 0.05
+    waitTime = 0.000001 / 1
     while True:
         resetSensor = GPIO.input(resetPin)
         stopSensor = GPIO.input(stopPin)
@@ -225,23 +225,23 @@ def test_stop():
 
         # Check for first stop point
         if stopSensor == 0 and preReset:
-            if stepCount > 10000:
+            if stepCount > 5000:
                 print(f"Steps from reset to first stall: {stepCount}")
                 print(f'The NO.{stall_id} step point works.')
                 stepCount = 0
                 stall_id += 1
                 preReset = False
-                print(preReset)
-        # Check for second stop point
+        # Check for the left stop point
         elif stopSensor == 0:
-            if stepCount > 10000:
+            if stepCount > 5000:
                 print(f"Steps from NO.{stall_id - 1} to NO.{stall_id}: {stepCount}")
                 print(f'The NO.{stall_id} step point works.')
                 
                 stepCount = 0
                 stall_id += 1
         if endSensor == 0:
-            GPIO.output(ENA, True)      # Disable motor driver
+            back_to_dock()
+            # GPIO.output(ENA, True)      # Disable motor driver
             break  
     # Release GPIO resources if needed
     GPIO.cleanup()
@@ -291,10 +291,10 @@ if __name__ == "__main__":
             count_total_distance()
         elif args.command == "reset":
             reset()
+        elif args.command == "test":
+            test_stop()
         if args.step:
             get_steps()
-        if args.test:
-            test_stop()
 
     finally:
         GPIO.cleanup()
