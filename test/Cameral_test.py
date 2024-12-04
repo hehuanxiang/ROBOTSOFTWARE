@@ -2,21 +2,10 @@ import pyrealsense2.pyrealsense2 as rs
 import numpy as np
 import cv2
 import os
-import time, datetime
-from time import sleep
-import sys
-sys.path.append('../')
-from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
-import threading
-import scipy
-import imageio
-import pyrealsense2.pyrealsense2 as rs
-import scipy.io
 
-def test_cameral():
-    # 创建test文件夹用于存储图片
-    output_folder = "data_test"
-    os.makedirs(output_folder, exist_ok=True)
+# 创建test文件夹用于存储图片
+output_folder = "data_test"
+os.makedirs(output_folder, exist_ok=True)
 
     # 创建管道
     pipeline = rs.pipeline()
@@ -80,10 +69,10 @@ def test_cameral():
             
         print("拍照结束")
 
-    finally:
-        # 停止流并清理资源
-        pipeline.stop()
-        cv2.destroyAllWindows()
+finally:
+    # 停止流并清理资源
+    pipeline.stop()
+    cv2.destroyAllWindows()
 
 def setupCamera():
     cameraPipeline = rs.pipeline()

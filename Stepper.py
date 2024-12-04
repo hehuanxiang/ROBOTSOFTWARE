@@ -120,11 +120,7 @@ class Stepper:
             
             
             stepCounter += 1
-            
-            # test
-            # print("StepCounter is {}".format(stepCounter))
         
-
             # 状态缓冲：每次循环更新最近三次的传感器状态，便于判断状态变化。
             preMagStatus[0] = preMagStatus[1]
             preMagStatus[1] = preMagStatus[2]
@@ -170,14 +166,9 @@ class Stepper:
             # print("Current reset status is {}".format(gpio.input(self.resetPin)))
             if (preStatus == 1):
                 if (sum(preMagStatus) == 0 and docking == False):
-                    if (stepCounter>0.3*steps and docking == False):
+                    # if (stepCounter>0.3*steps and docking == False):
+                    if (docking == False):
                         print("detected stop")
-                        # for i in range(2000):  # 调整循环次数控制缓慢停止的程度
-                        #     waitTime += waitTime * 1.1  # 每次增加等待时间，降低速度
-                        #     gpio.output(self.stepPin, True)
-                        #     sleep(waitTime)
-                        #     gpio.output(self.stepPin, False)
-                        #     stepCounter += 1
                         keepGoing= False
                         return None
             #elif(preStatus == 0):

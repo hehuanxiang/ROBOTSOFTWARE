@@ -156,26 +156,12 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
                 continue
             depth_image = np.asanyarray(aligned_depth_frame.get_data())
             depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-        #color_image = np.asanyarray(color_frame.get_data())
-        #ir_image=np.asanyarray(aligned_ir_frame.get_data())        
-        #images = np.hstack((ir_image,ir_image))
-
-            # 2024.11.1
-            # cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
-            # cv2.imshow('Align Example', depth_colormap)
             key = cv2.waitKey(1)
 
             if x%interval==0: #60
-            #depth_frameset.append(aligned_depth_frame)
-            #color_frameset.append(color_frame)
-            #ir_frameset.append(aligned_ir_frame)
                 print(int(x/interval))
                 frameset.append(aligned_frames)
-            #thread1=saveDataThread((x+interval)/interval, aligned_frames,int(x/interval))
-            #thread1.start()
 
-            #saveData(aligned_frames, x/30)
-        #print(x)
 
     finally:   
         pipeline.stop()
@@ -223,10 +209,9 @@ def setupCamera():
     return cameraPipeline, cameraConfig
 
 def handle_stop(sign):
-    print("Get in the handle_stop function.")
+    # print("Get in the handle_stop function.")
     if sign != None:
         testStepper = Stepper([STEP,DIR,ENA,endPin,resetPin,magnetPin]) 
-        print("Current sign for handle_stop function {}".format(sign))
         if sign == "docked":
             #move forward slightly
             print("docked2")
@@ -289,16 +274,30 @@ if __name__ == "__main__":
                 if i ==0:
                     #add it back
                     # action = testStepper.step(30000, "forward", 0.05, docking = False)
-                    action = testStepper.step(100000, "forward", 0.05, docking = False)     # 2024年11月15日13点32分
+                    # action = testStepper.step(100000, "forward", 0.05, docking = False)     # 2024年11月15日13点32分
+                    
+                    # Pulse/rev = 8000
+                    action = testStepper.step(60000, "forward", 1, docking = False)
+                    action = testStepper.step(30000, "forward", 0.05, docking = False)
+                    
+                    # Pulse/rev = 3200
+                    # action = testStepper.step(20000, "forward", 0.1, docking = False)
+                    # action = testStepper.step(15000, "forward", 0.05, docking = False)
                     handle_stop(action)
                     print("moved to ", i+1)
                 else:
 
-                    action = testStepper.step(5000, "forward", 0.05, docking = False)
-                    # action = testStepper.step(110000, "forward", 0.5, docking = False)
-
+                    # action = testStepper.step(5000, "forward", 0.05, docking = False)
                     # 猪场的设定是110000，对于lab的测试环境，每个stall的距离大约是20000，因此需要减小steps
-                    action = testStepper.step(100000, "forward", 0.05, docking = False)
+                    # action = testStepper.step(100000, "forward", 0.05, docking = False)
+                    
+                    # Pulse/rev = 8000
+                    action = testStepper.step(30000, "forward", 1, docking = False)
+                    action = testStepper.step(25000, "forward", 0.05, docking = False)
+                    
+                    # Pulse/rev = 3200
+                    # action = testStepper.step(12000, "forward", 1, docking = False)
+                    # action = testStepper.step(10000, "forward", 0.005, docking = False)
                     handle_stop(action)
                     print("moved to ", i+1)
 
@@ -316,10 +315,13 @@ if __name__ == "__main__":
                     if pigNumber[i]==999:
                         sleep(1)            
                     #capturePictures()
+                    
+            action = testStepper.step(150000*24, "back", 1000, docking = True)
+            handle_stop(action)
+            print("Return to dock at: ", t1)        
+            
             end_time = time.time()
             total_time = end_time - start_time
             print(f"Finish one imaging cycle in {total_time}")
 
-            action = testStepper.step(150000*24, "back", 1000, docking = True)
-            handle_stop(action)
-            print("Return to dock at: ", t1)
+            
