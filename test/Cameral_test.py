@@ -2,11 +2,21 @@ import pyrealsense2.pyrealsense2 as rs
 import numpy as np
 import cv2
 import os
+import time, datetime
+import threading
+from time import sleep
+import scipy.io
+import imageio
+import sys
+sys.path.append('..')
+from helper_functions import cv_find_chessboard, get_chessboard_points_3D, get_depth_at_pixel, convert_depth_pixel_to_metric_coordinate
+
+
 
 # 创建test文件夹用于存储图片
 output_folder = "data_test"
 os.makedirs(output_folder, exist_ok=True)
-
+def cameral_test():
     # 创建管道
     pipeline = rs.pipeline()
     config = rs.config()
@@ -69,10 +79,10 @@ os.makedirs(output_folder, exist_ok=True)
             
         print("拍照结束")
 
-finally:
-    # 停止流并清理资源
-    pipeline.stop()
-    cv2.destroyAllWindows()
+    finally:
+        # 停止流并清理资源
+        pipeline.stop()
+        cv2.destroyAllWindows()
 
 def setupCamera():
     cameraPipeline = rs.pipeline()
@@ -82,11 +92,66 @@ def setupCamera():
     cameraConfig.enable_stream(rs.stream.infrared,0,1024,768,rs.format.y8,30)
 
     return cameraPipeline, cameraConfig
-     
-def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
 
+def streamSensorRaw(pigID, cameraPipeline, cameraConfig, stallId, frame_count=50):
+    """
+    采集并直接保存原始帧数据（未解析）。
+    :param pigID: 猪只 ID
+    :param cameraPipeline: RealSense 相机管道
+    :param cameraConfig: RealSense 配置
+    :param stallId: 栏位 ID
+    :param frame_count: 需要采集的总帧数
+    """
     pipeline = cameraPipeline
     config = cameraConfig
+    pig_ID = pigID
+
+    # 创建保存路径
+    path = f"./Data/Data_Estrus_2024/ID_{str(stallId).zfill(2)}_{str(pigID)}/Raw"
+    os.makedirs(path, exist_ok=True)
+
+    try:
+        # 启动相机管道
+        profile = pipeline.start(config)
+        print(f"Pipeline started. Capturing {frame_count} frames...")
+
+        captured_frames = 0
+
+        while captured_frames < frame_count:
+            # 从管道获取帧
+            frames = pipeline.wait_for_frames()
+
+            # 遍历帧集合的子帧
+            for frame in frames:
+                # 提取帧类型和数据
+                frame_type = frame.get_profile().stream_type()
+                frame_data = frame.as_frame().get_data()
+
+                # 根据帧类型选择保存路径
+                if frame_type == rs.stream.depth:
+                    frame_path = os.path.join(path, f"depth_{captured_frames}.raw")
+                elif frame_type == rs.stream.color:
+                    frame_path = os.path.join(path, f"color_{captured_frames}.raw")
+                elif frame_type == rs.stream.infrared:
+                    frame_path = os.path.join(path, f"ir_{captured_frames}.raw")
+                else:
+                    continue  # 跳过未知帧类型
+
+                # 保存帧数据
+                with open(frame_path, "wb") as f:
+                    f.write(bytearray(frame_data))
+
+            captured_frames += 1
+            print(f"Captured and saved frame {captured_frames}/{frame_count}.")
+
+    finally:
+        # 停止相机管道
+        pipeline.stop()
+        print("Pipeline stopped. Raw frame capture complete.")
+
+def streamSensor(pigID, pipeline, profile, stallId):
+
+    pipeline
     pig_ID=pigID
     # print("ID:"+str(pig_ID))
     
@@ -95,7 +160,7 @@ def streamSensor(pigID, cameraPipeline, cameraConfig, stallId):
     os.makedirs(path, exist_ok=True)
 
     try:
-        profile = pipeline.start(config)
+        profile = profile
         colorizer=rs.colorizer()
     # Getting the depth sensor's depth scale (see rs-align example for explanation)
         # depth_sensor = profile.get_devicedepth_sensor().first_depth_sensor()
@@ -230,6 +295,9 @@ class saveDataThread(threading.Thread):
 if __name__ == "__main__":
     start = time.time()
     cameraPipeline, cameraConfig = setupCamera()
-    streamSensor(1, cameraPipeline, cameraConfig, 1)
+    profile = cameraPipeline.start(cameraConfig)
     end_time = time.time()
+    streamSensor(1, cameraPipeline, profile, 1)
+    # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
+    
     print(f"运行时间: {end_time - start} 秒")
