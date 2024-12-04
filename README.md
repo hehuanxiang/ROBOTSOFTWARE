@@ -319,7 +319,15 @@ rs-enumerate-devices
     ```bash
     git commit -m "Remove log files from tracking"
     ```
-
+3. 放弃工作区中的所有更改： 使用以下命令可以撤销工作区中所有未暂存的更改：
+    ```bash
+    git checkout -- .
+    ```
+4. 放弃暂存区中的更改： 如果你已经将更改添加到暂存区，可以使用以下命令撤销暂存操作：
+    ```bash
+    git reset
+    ```
+    然后再使用 git restore . 或 git checkout -- . 来放弃工作区的更改。
 # tmux使用
 1. 打开终端，启动一个新的tmux会话并命名：
     ```bash
