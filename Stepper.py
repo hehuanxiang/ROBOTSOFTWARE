@@ -7,14 +7,25 @@ import sys
 from time import sleep
 import RPi.GPIO as gpio  # https://pypi.python.org/pypi/RPi.GPIO
 #from mfrc522 import SimpleMFRC522
+import logging
+import multiprocessing
+from logging.handlers import QueueHandler
 
 
 # import exitHandler #uncomment this and line 58 if using exitHandler
 
+def setup_logger(logger_name, log_queue):
+    logger = logging.getLogger(logger_name)
+    if not logger.handlers:  # 如果没有已存在的 Handler，则添加
+        handler = logging.handlers.QueueHandler(log_queue)
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
+    return logger
+
 class Stepper:
     # instantiate stepper
     # pins = [stepPin, directionPin, enablePin]
-    def __init__(self, pins):
+    def __init__(self, pins, log_queue):
         # setup pins
         self.pins = pins
         self.stepPin = self.pins[0]         # 31,原来是29线断在里面了，换了一个
@@ -23,6 +34,9 @@ class Stepper:
         self.endPin = self.pins[3]          # 16
         self.resetPin = self.pins[4]        # 18
         self.magPin=self.pins[5]            # 37
+        
+        self.logger = setup_logger(f"Stepper", log_queue)
+        
         # use the broadcom layout for the gpio
         gpio.setmode(gpio.BOARD)
         gpio.setwarnings(False) 
@@ -55,8 +69,6 @@ class Stepper:
         
         # get the sensor status
         preStatus = gpio.input(self.magPin)
-        print("Original magnetic prestatus:{}".format(preStatus))
-        print("docking status:{}".format(docking))
         preResetStatus = gpio.input(self.resetPin)  # 1为高电平，未感应到磁铁
         preEndStatus = gpio.input(self.endPin)
         
@@ -65,7 +77,7 @@ class Stepper:
         if (dir == 'back'):
             direction = True         
         elif (dir != 'forward'):
-            print("STEPPER ERROR: no direction supplied")
+            self.logger.info("未指明电机运动方向")
             return True
         
         # set the direction for spining
@@ -80,9 +92,6 @@ class Stepper:
         preMagStatus = [1,1,1]
         resetStatus = [1,1,1]
         endStatus = [1,1,1]
-        
-        # test
-        print("The goal of step is {}".format(steps))
         
         #reader = SimpleMFRC522()
         while keepGoing:
@@ -151,7 +160,7 @@ class Stepper:
                 stepCounter=0
                 gpio.output(self.directionPin, direction)
                 preResetStatus=0
-                print("reset needed1")
+                self.logger.info(f"检测到reset point")
                 docking=False
                 return "docked"
                 #keepGoing = False
@@ -168,7 +177,7 @@ class Stepper:
                 if (sum(preMagStatus) == 0 and docking == False):
                     # if (stepCounter>0.3*steps and docking == False):
                     if (docking == False):
-                        print("detected stop")
+                        self.logger.info(f"检测到检查点，准备开始进行拍照，消耗步数：{stepCounter}")
                         keepGoing= False
                         return None
             #elif(preStatus == 0):
@@ -194,6 +203,7 @@ class Stepper:
         # 将 enablePin 置为 高电平，停止电机供电。
         gpio.output(self.enablePin, True)
 
-        print("stepperDriver complete (turned " + dir + " " + str(stepCounter) + " steps)")
+        # self.logger.info("未指明电机运动方向")
+        self.logger.info(f"当前步进结束，开始{dir}, 完全使用预设步数为：{stepCounter}")
 
         return(stepCounter)

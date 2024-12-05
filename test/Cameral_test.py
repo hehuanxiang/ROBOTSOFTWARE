@@ -293,11 +293,12 @@ class saveDataThread(threading.Thread):
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
 if __name__ == "__main__":
-    start = time.time()
-    cameraPipeline, cameraConfig = setupCamera()
-    profile = cameraPipeline.start(cameraConfig)
-    end_time = time.time()
-    streamSensor(1, cameraPipeline, profile, 1)
-    # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
+    # start = time.time()
+    # cameraPipeline, cameraConfig = setupCamera()
+    # profile = cameraPipeline.start(cameraConfig)
+    # end_time = time.time()
+    # streamSensor(1, cameraPipeline, profile, 1)
+    # # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
     
-    print(f"运行时间: {end_time - start} 秒")
+    # print(f"运行时间: {end_time - start} 秒")
+    cameral_test()
