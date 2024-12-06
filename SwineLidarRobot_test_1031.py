@@ -20,6 +20,7 @@ import json
 import logging
 import multiprocessing
 from logging.handlers import QueueHandler
+import psutil
 
 
 def setup_logger(logger_name, log_queue):
@@ -180,9 +181,9 @@ def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
             if x%interval==0: #60
                 frameset.append(aligned_frames)
                 logger.info("深度图像捕获完成")
-    finally:   
+    except:   
         # pipeline.stop()
-        logger.info("相机管道已停止")
+        logger.info("相机无法正常获取图像")
     try:
         thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId)
         thread1.start()
@@ -304,50 +305,68 @@ def main(log_queue):
 
         cameraPipeline, cameraConfig = setupCamera()
         
-        
-
         stallNumber = farm_config["stallNumber"]
+        
+        cycle = 0
+        
+        # 定义每个成像周期的计数器和休息逻辑
+        start_cycle_time = time.time()  # 记录循环开始的时间
+        rest_interval = 5 * 60 * 60  # 每隔5小时 (单位为秒)
+        rest_duration = 10 * 60  # 休息5分钟 (单位为秒)
         while True:
-            t1 = datetime.datetime.now()
-            if t1.minute % 1 == 0:
-                start_time = time.time()
-                logger.info("开始新成像周期")
-                
-                logger.info("启动相机pipeline")
-                profile = cameraPipeline.start(cameraConfig)
-                for i in range(stallNumber):
-                    try:
-                        if i == 0:
-                            logger.info(f"快速接近：Stall_{i}")
-                            action = testStepper.step(55000, "forward", 1, docking=False)
-                            logger.info(f"即将抵达：Stall_{i}，减速接近")
-                            action = testStepper.step(35000, "forward", 0.05, docking=False)
-                        else:
-                            logger.info(f"快速接近：Stall_{i}")
-                            action = testStepper.step(25000, "forward", 1, docking=False)
-                            logger.info(f"即将抵达：Stall_{i}，减速接近")
-                            action = testStepper.step(30000, "forward", 0.05, docking=False)
+            # t1 = datetime.datetime.now()
+            # if t1.minute % 1 == 0:
+            start_time = time.time()
+            logger.info(f"{datetime.datetime.now()},开始新成像周期：{cycle + 1}")
+            
+            logger.info("启动相机pipeline")
+            profile = cameraPipeline.start(cameraConfig)
+            for i in range(stallNumber):
+                try:
+                    if i == 0:
+                        logger.info(f"快速接近：Stall_{i}")
+                        action = testStepper.step(55000, "forward", 1, docking=False)
+                        logger.info(f"即将抵达：Stall_{i}，减速接近")
+                        action = testStepper.step(35000, "forward", 0.05, docking=False)
+                    else:
+                        logger.info(f"快速接近：Stall_{i}")
+                        action = testStepper.step(25000, "forward", 1, docking=False)
+                        logger.info(f"即将抵达：Stall_{i}，减速接近")
+                        action = testStepper.step(30000, "forward", 0.05, docking=False)
 
-                        handle_stop(action, testStepper)
-                        logger.info(f"抵达：Stall_{i}")
+                    handle_stop(action, testStepper)
+                    logger.info(f"抵达：Stall_{i}")
 
-                        if pigNumber[i] != 9998:
-                            logger.info(f"处理在Stall_{i}的猪，ID: {pigNumber[i]} ")
-                            streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
+                    if pigNumber[i] != 9998:
+                        logger.info(f"处理在Stall_{i}的猪，ID: {pigNumber[i]} ")
+                        streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
 
-                    except Exception as e:
-                        logger.error(f"当前：Stall_{i}猪猪成像过程中发生错误", exc_info=True)
-                logger.info(f"开始返回起始点，时间: {t1}")
-                action = testStepper.step(150000 * 24, "back", 1000, docking=True)
-                handle_stop(action, testStepper)
-                logger.info(f"返回到起始点，时间: {t1}")
+                except Exception as e:
+                    logger.error(f"当前：Stall_{i}猪猪成像过程中发生错误", exc_info=True)
+                    
+            logger.info(f"开始返回起始点，时间: {datetime.datetime.now()}")
+            action = testStepper.step(150000 * 24, "back", 1000, docking=True)
+            logger.info(f"返回到起始点，时间: {datetime.datetime.now()}")
+            
+            end_time = time.time()
+            total_time = end_time - start_time
+            logger.info(f"第{cycle + 1}个成像周期完成于：{datetime.datetime.now()}，用时 {total_time:.2f} 秒")
+            cameraPipeline.stop()
+            logger.info("关闭相机pipeline")
+            
+            memory = psutil.virtual_memory()
+            logger.info(f"Memory used: {memory.percent}%")
+            
+            #检查是否需要休息
+            # elapsed_time_since_start = time.time() - start_cycle_time
+            # if elapsed_time_since_start >= rest_interval:
+            #     logger.info(f"已运行 {elapsed_time_since_start / 3600:.2f} 小时，休息 10 分钟。")
+            #     time.sleep(rest_duration)  # 休息 5 分钟
+            #     start_cycle_time = time.time()  # 重置计时器
 
-                end_time = time.time()
-                total_time = end_time - start_time
-                logger.info(f"成像周期完成，用时 {total_time:.2f} 秒")
-                
-                cameraPipeline.stop()
-                logger.info("关闭相机pipeline")
+            handle_stop(action, testStepper)
+
+            cycle = cycle + 1
     except Exception as e:
         logger.critical("主程序发生致命错误", exc_info=True)
     finally:

@@ -127,16 +127,12 @@ class Stepper:
             sleep(waitTime)     # 等待时间控制速度：sleep(waitTime) 用于调节脉冲之间的时间间隔。
             gpio.output(self.stepPin, False)
             
-            
             stepCounter += 1
         
             # 状态缓冲：每次循环更新最近三次的传感器状态，便于判断状态变化。
             preMagStatus[0] = preMagStatus[1]
             preMagStatus[1] = preMagStatus[2]
             preMagStatus[2] = gpio.input(self.magPin)
-            
-            # test
-            # print(preMagStatus)
 
             resetStatus[0] = resetStatus[1]
             resetStatus[1] = resetStatus[2]           
@@ -163,16 +159,10 @@ class Stepper:
                 self.logger.info(f"检测到reset point")
                 docking=False
                 return "docked"
-                #keepGoing = False
-                #break
-                #sys.exit()
 
             if(stepCounter > 1.2*steps and docking == False):
                 keepGoing = False
-
-            # print("Current magnetic status is {}".format(gpio.input(self.magPin)))
-            # print("Current end status is {}".format(gpio.input(self.endPin)))
-            # print("Current reset status is {}".format(gpio.input(self.resetPin)))
+                
             if (preStatus == 1):
                 if (sum(preMagStatus) == 0 and docking == False):
                     # if (stepCounter>0.3*steps and docking == False):

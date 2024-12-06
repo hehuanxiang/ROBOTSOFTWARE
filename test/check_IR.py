@@ -1,5 +1,6 @@
 import os
 import shutil
+import datetime
 
 def extract_last_images_from_all_ir_folders(root_folder, target_folder):
     # 检查目标文件夹是否存在，不存在则创建
@@ -30,6 +31,7 @@ def extract_last_images_from_all_ir_folders(root_folder, target_folder):
 
 # 示例用法
 root_folder = "/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2024"  # 替换为你的根文件夹路径
-target_folder = "Latest_IR_Images"  # 替换为你的目标文件夹路径
+time = datetime.datetime.now()
+target_folder = f"Latest_IR_Images/{str(time.date())}_{str(time.hour)}_check"  # 替换为你的目标文件夹路径
 
 extract_last_images_from_all_ir_folders(root_folder, target_folder)

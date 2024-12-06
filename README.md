@@ -415,6 +415,8 @@ rs-enumerate-devices
     WantedBy=multi-user.target
     ```
 + 保存并退出（Ctrl + O, Ctrl + X）
++   ```bash
+    sudo systemctl daemon-reload
 + 检查服务状态：
     ```bash
     sudo systemctl status motor.service
@@ -422,4 +424,97 @@ rs-enumerate-devices
 + 重启验证
     ```bash
     sudo reboot
+    ```
+
+# 设置 Raspberry Pi 自动启动服务
+
+## 创建服务文件
+1. 使用 `nano` 编辑器创建服务文件：
+    ```bash
+    sudo nano /etc/systemd/system/reboot_pi.service
+    ```
+2. 在编辑器中输入以下内容：
+    ```ini
+    [Unit]
+    Description=Reboot the Raspberry Pi
+    After=network.target
+
+    [Service]
+    Type=oneshot
+    ExecStart=/bin/systemctl reboot
+    ```
+
+3. 保存并退出：
+    + **Ctrl+O** 保存修改。
+    + **Ctrl+X** 退出编辑器。
+
+---
+
+## 创建定时器文件
+1. 创建一个定时器文件：
+    ```bash
+    sudo nano /etc/systemd/system/reboot_pi.timer
+    ```
+2. 在编辑器中输入以下内容：
+    ```ini
+    [Unit]
+    Description=Schedule Raspberry Pi Reboot
+
+    [Timer]
+    OnCalendar=*-*-* 04:00:00
+    OnCalendar=*-*-* 23:00:00
+    Unit=reboot_pi.service
+
+    [Install]
+    WantedBy=timers.target
+    ```
+
+3. 保存并退出：
+    + **Ctrl+O** 保存修改。
+    + **Ctrl+X** 退出编辑器。
+
+---
+
+## 激活服务和定时器
+1. 重新加载 `systemd` 配置：
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+2. 启用定时器：
+    ```bash
+    sudo systemctl enable reboot_pi.timer
+    ```
+3. 启动定时器：
+    ```bash
+    sudo systemctl start reboot_pi.timer
+    ```
+
+---
+
+## 验证定时器是否生效
+1. 查看定时器状态：
+    ```bash
+    systemctl list-timers --all
+    ```
+    结果应该类似如下：
+    ```
+    NEXT                        LEFT       LAST                        PASSED    UNIT             ACTIVATES
+    Thu 2024-12-06 04:00:00 UTC 10h left   n/a                         n/a       reboot_pi.timer reboot_pi.service
+    Thu 2024-12-06 23:00:00 UTC 18h left   n/a                         n/a       reboot_pi.timer reboot_pi.service
+    ```
+
+2. 查看服务日志：
+    ```bash
+    journalctl -u reboot_pi.service
+    ```
+
+---
+
+## 注意事项
++ 确保服务文件和定时器文件路径正确。
++ 重启命令 `/bin/systemctl reboot` 默认以 `root` 权限运行，无需添加 `sudo`。
++ 如果需要修改时间安排，编辑 `reboot_pi.timer` 文件并重新加载配置：
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl restart reboot_pi.timer
     ```
