@@ -162,24 +162,6 @@ def streamSensor(pigID, pipeline, profile, stallId):
     try:
         profile = profile
         colorizer=rs.colorizer()
-    # Getting the depth sensor's depth scale (see rs-align example for explanation)
-        # depth_sensor = profile.get_devicedepth_sensor().first_depth_sensor()
-        depth_sensor = profile.get_device().first_depth_sensor()
-        depth_sensor.set_option(rs.option.min_distance,0)
-        depth_sensor.set_option(rs.option.enable_max_usable_range,0)
-        depth_scale = depth_sensor.get_depth_scale()
-        print("Depth Scale is: " , depth_scale)
-        get_intrinsic = profile.get_stream(rs.stream.depth)
-        intr=get_intrinsic.as_video_stream_profile().get_intrinsics()
-    #  clipping_distance_in_meters meters away
-        clipping_distance_in_meters = 3.25 #1 meter
-        clipping_distance = clipping_distance_in_meters / depth_scale
-
-    # Create an align object
-    # rs.align allows us to perform alignment of depth frames to others frames
-    # The "align_to" is the stream type to which we plan to align depth frames.
-        align_to = rs.stream.depth
-        align = rs.align(align_to)
 
         tt = time.monotonic()
         t = datetime.datetime.now()
@@ -292,13 +274,175 @@ class saveDataThread(threading.Thread):
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
+def record_bag(output_file, record_time=10):
+    """
+    录制 RealSense 数据到 .bag 文件。
+
+    Args:
+        output_file (str): 保存的 .bag 文件路径。
+        record_time (int): 录制时长，单位秒。
+    """
+    # 配置管道
+    pipeline = rs.pipeline()
+    config = rs.config()
+
+    # 配置流
+    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
+    # 设置录制文件路径
+    config.enable_record_to_file(output_file)
+
+    # 启动管道
+    pipeline.start(config)
+    print(f"Recording started: {output_file}")
+
+    try:
+        import time
+        start_time = time.time()
+
+        while time.time() - start_time < record_time:
+            frames = pipeline.wait_for_frames()
+            # 显示彩色帧（可选）
+            color_frame = frames.get_color_frame()
+            if color_frame:
+                color_image = np.asanyarray(color_frame.get_data())
+                # 保存帧（替代显示）
+                cv2.imwrite(f"output/color_frame_{int(time.time())}.jpg", color_image)
+
+    finally:
+        pipeline.stop()
+        cv2.destroyAllWindows()
+        print(f"Recording stopped. File saved: {output_file}")
+        
+class BagsaveDataThread(threading.Thread):
+    def __init__(self, threadID, frameset, i, path, PIG_ID, time_stamp, intr):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.frameset = frameset
+        self.path = path
+        self.i = i
+        self.PIG_ID = PIG_ID
+        self.time_stamp = time_stamp
+        self.intr = intr
+
+    def run(self):
+        intr = self.intr
+        depth_threshold = rs.threshold_filter(min_dist=0.1, max_dist=2.5)
+        colorizer = rs.colorizer()
+        path = self.path
+        frames = self.frameset
+        t = self.time_stamp
+        PIG_ID = self.PIG_ID
+        j = 1
+        imgname = f"{PIG_ID}_{t.year}_{t.month}_{t.day}_{t.hour}_{t.minute}_{t.second}_"
+
+        for frame in frames:
+            color_frame = frame.get_color_frame()
+            depth_frame = frame.get_depth_frame()
+            ir_frame = frame.get_infrared_frame()
+
+            # 获取帧数据
+            depth_image = np.asanyarray(depth_frame.get_data())
+            color_image = np.asanyarray(color_frame.get_data())
+            ir_image = np.asanyarray(ir_frame.get_data())
+
+            XX, YY, ZZ = np.zeros((480, 640)), np.zeros((480, 640)), np.zeros((480, 640))
+
+            for y in range(480):
+                for x in range(480):
+                    dist = depth_frame.get_distance(x, y)
+                    X, Y, Z = convert_depth_pixel_to_metric_coordinate(dist, x, y, intr)
+                    XX[y, x] = X
+                    YY[y, x] = Y
+                    ZZ[y, x] = Z
+
+            obj = np.stack((XX, YY, ZZ))
+
+            # 创建目录
+            for sub_dir in ["DM", "depth", "RGB", "IR"]:
+                os.makedirs(os.path.join(path, sub_dir), exist_ok=True)
+
+            # 保存数据
+            matfile = os.path.join(path, "DM", f"{imgname}{j}.mat")
+            scipy.io.savemat(matfile, mdict={"out": obj}, oned_as="row")
+            imageio.imwrite(os.path.join(path, "depth", f"{imgname}{j}.png"), depth_image)
+            imageio.imwrite(os.path.join(path, "RGB", f"{imgname}{j}.png"), color_image)
+            imageio.imwrite(os.path.join(path, "IR", f"{imgname}{j}.png"), ir_image)
+            j += 1
+
+        print(f"save  PIG ID_{PIG_ID} data success {self.threadID}")
+
+# 主程序
+def process_bag_file(bag_file, output_dir, PIG_ID):
+    """
+    处理 .bag 文件，并使用多线程保存帧数据。
+
+    Args:
+        bag_file (str): .bag 文件路径。
+        output_dir (str): 保存路径。
+        PIG_ID (int): 猪的 ID。
+    """
+    pipeline = rs.pipeline()
+    config = rs.config()
+    config.enable_device_from_file(bag_file)
+
+    pipeline.start(config)
+
+    try:
+        thread_id = 1
+        while True:
+            frames = []
+            for _ in range(5):  # 每次处理 5 帧
+                frameset = pipeline.wait_for_frames()
+                frames.append(frameset)
+
+            # 获取相机内参
+            intr = frameset.get_depth_frame().profile.as_video_stream_profile().intrinsics
+
+            # 创建时间戳
+            time_stamp = datetime.datetime.now()
+
+            # 启动线程
+            thread = saveDataThread(
+                threadID=thread_id,
+                frameset=frames,
+                i=thread_id,
+                path=output_dir,
+                PIG_ID=PIG_ID,
+                time_stamp=time_stamp,
+                intr=intr
+            )
+            thread.start()
+            thread_id += 1
+
+    except RuntimeError:
+        print("End of file reached or error occurred.")
+    finally:
+        pipeline.stop()
+
+
 if __name__ == "__main__":
     # start = time.time()
     # cameraPipeline, cameraConfig = setupCamera()
     # profile = cameraPipeline.start(cameraConfig)
+    
+    # device = device = profile.get_device()
+    # recorder = device.as_recorder()
+    # recorder.start_recording("record.bag")
+    
     # end_time = time.time()
     # streamSensor(1, cameraPipeline, profile, 1)
-    # # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
+    # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
     
     # print(f"运行时间: {end_time - start} 秒")
-    cameral_test()
+    # cameral_test()
+    path = 'output_bag/'
+    os.makedirs(path, exist_ok=True)
+    record_bag("output_bag/record.bag", record_time=1)
+    
+    bag_file = "output_bag/record.bag"
+    output_dir = "output_bag/processed"
+    PIG_ID = 12345
+
+    process_bag_file(bag_file, output_dir, PIG_ID)

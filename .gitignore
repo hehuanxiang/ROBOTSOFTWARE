@@ -4,3 +4,5 @@ Data/
 data_test/
 test/Data/
 test/Latest_IR_Images/
+*.bag
+test/output_bag/
