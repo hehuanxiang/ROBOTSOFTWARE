@@ -86,7 +86,7 @@ class Stepper:
         stepCounter = 0
         keepGoing = True
 
-        waitTime = 0.00001 / speed  # waitTime controls speed, the less watitime, the faster for spining
+        waitTime = 0.000001 / speed  # waitTime controls speed, the less watitime, the faster for spining
         
         #preThreeStatus = [preStatus,preStatus,preStatus,preStatus,preStatus]
         preMagStatus = [1,1,1]
@@ -164,7 +164,7 @@ class Stepper:
                 keepGoing = False
                 
             if (preStatus == 1):
-                if (sum(preMagStatus) == 0 and docking == False):
+                if (sum(preMagStatus) == 0 and stepCounter > 2000 and docking == False):
                     # if (stepCounter>0.3*steps and docking == False):
                     if (docking == False):
                         self.logger.info(f"检测到检查点，准备开始进行拍照，消耗步数：{stepCounter}")

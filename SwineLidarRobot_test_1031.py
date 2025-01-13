@@ -31,8 +31,13 @@ def setup_logger(logger_name, log_queue):
         logger.setLevel(logging.DEBUG)
     return logger
 
+def callback(threadID, result, log_queue):
+    """回调函数，在线程完成后调用"""
+    logger = setup_logger(f"saveDataThread-{threadID}", log_queue)
+    logger.info(f"线程 {threadID} 已完成，结果: {result}")
+
 class saveDataThread(threading.Thread):
-    def __init__(self, frameset, i, path, PIG_ID, time_stamp, intr, log_queue, stallId):
+    def __init__(self, frameset, i, path, PIG_ID, time_stamp, intr, log_queue, stallId, callback):
         threading.Thread.__init__(self)
         self.threadID = threading.get_ident()
         self.frameset=frameset
@@ -44,6 +49,9 @@ class saveDataThread(threading.Thread):
         self.logger = setup_logger(f"saveDataThread-{self.threadID}", log_queue)
         self.data_saved = False  # 新增属性，初始为 False，判断是否成功保存数据
         self.stallId = stallId
+        self.stop_event = threading.Event()
+        self.callback = callback
+        self.log_queue = log_queue
 
     def run(self):
         try: 
@@ -61,6 +69,10 @@ class saveDataThread(threading.Thread):
             self.logger.info(f"开始保存stall：Stall_{self.stallId}，猪 ID: {PIG_ID} 的数据到路径: {path}")
 
             for frame in frames:
+                if self.stop_event.is_set():
+                    self.logger.warning(f"线程停止，Stall_{self.stallId}，猪 ID {PIG_ID} 数据保存中断")
+                    break
+                
                 color_frame=frame.get_color_frame()
                 depth_frame=frame.get_depth_frame()
                 ir_frame=frame.get_infrared_frame()
@@ -105,12 +117,145 @@ class saveDataThread(threading.Thread):
                 imageio.imwrite(path+"RGB/"+name+".png", color_image)
                 imageio.imwrite(path+"IR/"+name+".png", ir_image)
                 j=j+1
-            self.logger.info(f"Stall_{self.stallId}，猪 ID {PIG_ID} 数据保存完成，线程 ID: {self.threadID}")
+            if self.callback:
+                self.callback(self.threadID, f"Stall_{self.stallId}，猪 ID {PIG_ID} 数据保存完成，线程 ID: {self.threadID}", self.log_queue)
+            # self.logger.info(f"Stall_{self.stallId}，猪 ID {PIG_ID} 数据保存完成，线程 ID: {self.threadID}")
             self.data_saved = True
+            
         except Exception as e:
             self.data_saved = False
             self.logger.error(f"Stall_{self.stallId}，保存猪 ID {self.PIG_ID} 数据时发生错误", exc_info=True)
             raise RuntimeError(f"数据未成功保存，Stall_{self.stallId}，猪_{PIG_ID}")
+    
+    def stop(self):
+        """设置停止事件，安全终止线程。"""
+        self.stop_event.set()
+
+class RecordBagThread(threading.Thread):
+    def __init__(self, stallId, pigID, log_queue, pipeline:rs.pipeline, config:rs.config, record_time):
+        threading.Thread.__init__(self)
+        self.threadID = threading.get_ident()
+        self.logger = setup_logger(f"saveDataThread-{self.threadID}", log_queue)
+        self.pipeline = pipeline
+        self.record_time = record_time
+        self.config = config
+        self.stallId = stallId
+        self.pigID = pigID
+
+    
+    def run(self):
+        timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        path = f"./Data/Data_Estrus_2024_12/ID_{str(self.stallId).zfill(2)}_{str(self.pigID)}/bag/"
+        bag_file = f"pig_{self.pigID}_{timestamp}.bag"
+        output_file = path + bag_file
+        
+        self.config.enable_record_to_file(output_file)
+        
+        try:
+            os.makedirs(path, exist_ok=True)
+            self.logger.info(f"确保文件夹已存在: {path}")
+        except Exception as e:
+            self.logger.error(f"创建文件夹失败: {path}", exc_info=True)
+        
+
+        start_time = time.time()
+        self.logger.info("开始记录bag文件，实际上就是视频")
+        count = 0
+        try: 
+            while time.time() - start_time < 1.0:
+                print(count)
+                print(time)
+                self.pipeline.wait_for_frames()
+                count += 1
+        except Exception as e:
+            print(f"Error during recording: {e}")
+        finally:
+            self.pipeline.stop()
+            self.logger.info(f"bag文件：{output_file}, 记录完成。线程为：{self.threadID}")
+            
+
+class streamSensorThread(threading.Thread):
+    def __init__(self, pigID, cameraPipeline, profile, stallId, log_queue, callback):
+        threading.Thread.__init__(self)
+        self.threadID = threading.get_ident()
+        self.pigID = pigID
+        self.pipeline = cameraPipeline
+        self.profile = profile
+        self.stallId = stallId
+        self.logger = setup_logger(f"streamSensorThread-{self.threadID}", log_queue)
+        self.callback = callback
+        self.log_queue = log_queue
+        
+    def run(self):
+        path = f"./Data/Data_Estrus_2024_12/ID_{str(self.stallId).zfill(2)}_{str(self.pigID)}/"
+        try:
+            os.makedirs(path, exist_ok=True)
+            self.logger.info(f"确保文件夹已存在: {path}")
+        except Exception as e:
+            self.logger.error(f"创建文件夹失败: {path}", exc_info=True)
+        
+        try:
+            colorizer=rs.colorizer()
+
+            depth_sensor = self.profile.get_device().first_depth_sensor()
+            depth_sensor.set_option(rs.option.min_distance,0)
+            depth_sensor.set_option(rs.option.enable_max_usable_range,0)
+            self.logger.info("成功配置深度传感器")
+            
+            depth_scale = depth_sensor.get_depth_scale()
+            get_intrinsic = self.profile.get_stream(rs.stream.depth)
+            intr=get_intrinsic.as_video_stream_profile().get_intrinsics()
+            self.logger.info(f"获取相机内参:{intr}")
+            #  clipping_distance_in_meters meters away
+            clipping_distance_in_meters = 3.25 #1 meter
+            clipping_distance = clipping_distance_in_meters / depth_scale
+
+            # Create an align object
+            # rs.align allows us to perform alignment of depth frames to others frames
+            # The "align_to" is the stream type to which we plan to align depth frames.
+            align_to = rs.stream.depth
+            align = rs.align(align_to)
+
+            tt = time.monotonic()
+            t = datetime.datetime.now()
+
+            frameset=[]
+            interval=20
+
+            self.logger.info(f"进行处理猪 ID: {self.pigID} 在位置 {self.stallId}，开始捕获 {interval} 帧深度图像")
+            for x in range(interval*1):
+                frames = self.pipeline.wait_for_frames()
+                # frames.get_depth_frame() is a 640x360 depth image
+                st =int(time.monotonic()-tt)
+                if st >= 21:
+                    self.logger.info("captured failed")
+                    break
+                # Align the depth frame to color frame
+                aligned_frames = align.process(frames)
+                # Get aligned frames
+                aligned_depth_frame = aligned_frames.get_depth_frame() # aligned_depth_frame is a 640x480 depth image
+                #aligned_ir_frame=aligned_frames.get_infrared_frame()
+                #color_frame = aligned_frames.get_color_frame()
+                if not aligned_depth_frame:
+                    self.logger.warning(f"第 {x+1} 帧对齐失败，跳过")
+                    continue
+                depth_image = np.asanyarray(aligned_depth_frame.get_data())
+                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+                key = cv2.waitKey(1)
+
+                if x%interval==0: #60
+                    frameset.append(aligned_frames)
+                    self.logger.info("深度图像捕获完成")
+            
+            thread1 = saveDataThread(frameset,int(x/interval),path, self.pigID, t,intr, log_queue, self.stallId, callback=callback)
+            thread1.start()
+            self.logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{self.pigID}的数据")
+            if self.callback:
+                self.callback(self.threadID, "图像捕获线程结束", self.log_queue)
+        except Exception as e:
+            self.logger.error("捕获图像失败", exc_info=True)
+        finally:
+            self.logger.info("图像捕获线程结束")
 
 def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
     logger = setup_logger("streamSensor", log_queue)
@@ -122,7 +267,7 @@ def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
     # str.zfill(2)：
     # 将 pigID 转换为字符串，不足两位时在前面填充 0。
     # 示例：1.zfill(2) -> "01"。
-    path = f"./Data/Data_Estrus_2024/ID_{str(stallId).zfill(2)}_{str(pigID)}/"
+    path = f"./Data/Data_Estrus_2024_12/ID_{str(stallId).zfill(2)}_{str(pigID)}/"
     try:
         os.makedirs(path, exist_ok=True)
         logger.info(f"确保文件夹已存在: {path}")
@@ -185,9 +330,10 @@ def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
         # pipeline.stop()
         logger.info("相机无法正常获取图像")
     try:
-        thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId)
+        thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId, callback=callback)
         thread1.start()
         logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{pig_ID}的数据")
+        sleep(2)
     except:
         thread1.stop()
         logger.error("保存线程启动失败", exc_info=True)
@@ -318,18 +464,23 @@ def main(log_queue):
             # if t1.minute % 1 == 0:
             start_time = time.time()
             logger.info(f"{datetime.datetime.now()},开始新成像周期：{cycle + 1}")
+                    
+            max_retries = 3  # 设置最大重试次数
+            retry_delay = 30  # 每次重试的间隔时间（秒）
+
             
-            logger.info("启动相机pipeline")
-            profile = cameraPipeline.start(cameraConfig)
+                
             for i in range(stallNumber):
                 try:
                     if i == 0:
                         logger.info(f"快速接近：Stall_{i}")
+                        # action = testStepper.step(90000, "forward", 1, docking=False)
                         action = testStepper.step(55000, "forward", 1, docking=False)
                         logger.info(f"即将抵达：Stall_{i}，减速接近")
                         action = testStepper.step(35000, "forward", 0.05, docking=False)
                     else:
                         logger.info(f"快速接近：Stall_{i}")
+                        # action = testStepper.step(70000, "forward", 1, docking=False)
                         action = testStepper.step(25000, "forward", 1, docking=False)
                         logger.info(f"即将抵达：Stall_{i}，减速接近")
                         action = testStepper.step(30000, "forward", 0.05, docking=False)
@@ -337,13 +488,53 @@ def main(log_queue):
                     handle_stop(action, testStepper)
                     logger.info(f"抵达：Stall_{i}")
 
-                    if pigNumber[i] != 9998:
+                    if pigNumber[i] != 0:
                         logger.info(f"处理在Stall_{i}的猪，ID: {pigNumber[i]} ")
+                        
+                        for attempt in range(max_retries):
+                            try:
+                                logger.info(f"尝试启动相机pipeline (第 {attempt + 1} 次)")
+                                profile = cameraPipeline.start(cameraConfig)
+                                logger.info("相机启动成功")
+                                break  # 启动成功后跳出循环
+                            except Exception as e:
+                                logger.error(f"相机pipeline启动失败 (第 {attempt + 1} 次): {e}")
+                                
+                                # 如果还未达到最大重试次数，进行清理并等待
+                                if attempt < max_retries - 1:
+                                    try:
+                                        logger.info("尝试停止相机pipeline以清理状态")
+                                        cameraPipeline.stop()
+                                    except Exception as stop_error:
+                                        logger.warning(f"相机pipeline停止失败: {stop_error}")
+                                    
+                                    logger.info(f"{retry_delay} 秒后重试...")
+                                    time.sleep(retry_delay)  # 等待后再次尝试
+                                else:
+                                    logger.critical("多次尝试启动相机pipeline均失败，放弃重试")
+                                    raise e  # 抛出异常以供上层处理
+                        
+                        # 线程仅仅用于保存数据
+                       
                         streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
-
+                        
+                        # 线程负责整个数据采集以及保存
+                        # streamThread = streamSensorThread(pigNumber[i], cameraPipeline, profile, i, log_queue, callback=callback)
+                        # streamThread.start()
+                        # logger.info(f"启动保存线程: {streamThread.threadID} 开始采集并保存猪_{pigNumber[i]}的数据")
+                        # logger.info("启动相机pipeline")
+                        # profile = cameraPipeline.start(cameraConfig)
+                        # record_thread = RecordBagThread(i, pigNumber[i], log_queue, cameraPipeline, cameraConfig, 1)
+                        # record_thread.start()
+                        # logger.info(f"启动bag文件保存线程：{record_thread.threadID}")
+                        
                 except Exception as e:
                     logger.error(f"当前：Stall_{i}猪猪成像过程中发生错误", exc_info=True)
-                    
+                finally:
+                    if pigNumber[i] != 0:
+                        cameraPipeline.stop()
+                        logger.info("关闭相机pipeline")
+            
             logger.info(f"开始返回起始点，时间: {datetime.datetime.now()}")
             action = testStepper.step(150000 * 24, "back", 1000, docking=True)
             logger.info(f"返回到起始点，时间: {datetime.datetime.now()}")
@@ -351,8 +542,7 @@ def main(log_queue):
             end_time = time.time()
             total_time = end_time - start_time
             logger.info(f"第{cycle + 1}个成像周期完成于：{datetime.datetime.now()}，用时 {total_time:.2f} 秒")
-            cameraPipeline.stop()
-            logger.info("关闭相机pipeline")
+            
             
             memory = psutil.virtual_memory()
             logger.info(f"Memory used: {memory.percent}%")
@@ -369,6 +559,7 @@ def main(log_queue):
             cycle = cycle + 1
     except Exception as e:
         logger.critical("主程序发生致命错误", exc_info=True)
+            
     finally:
         GPIO.cleanup()
         logger.info("清理 GPIO 引脚，程序结束")
