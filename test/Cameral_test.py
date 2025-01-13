@@ -298,18 +298,16 @@ def record_bag(output_file, record_time=1):
     print(f"Recording started: {output_file}")
 
     try:
-        import time
         start_time = time.time()
+        last_frame_time = start_time
+        frame_interval = 1 / 30  # 每帧间隔（秒）
 
         while time.time() - start_time < record_time:
-        # for _ in range(30):
-            frames = pipeline.wait_for_frames()
-            # 显示彩色帧（可选）
-            color_frame = frames.get_color_frame()
-            if color_frame:
-                color_image = np.asanyarray(color_frame.get_data())
-                # 保存帧（替代显示）
-                cv2.imwrite(f"output/color_frame_{int(time.time())}.jpg", color_image)
+            current_time = time.time()
+            if current_time - last_frame_time >= frame_interval:
+                frames = pipeline.wait_for_frames()
+                last_frame_time = current_time
+                print("*")
 
     finally:
         pipeline.stop()
@@ -394,7 +392,7 @@ def process_bag_file(bag_file, output_dir, PIG_ID):
         thread_id = 1
         while True:
             frames = []
-            for _ in range(5):  # 每次处理 5 帧
+            for _ in range(20):  # 每次处理 5 帧
                 frameset = pipeline.wait_for_frames()
                 frames.append(frameset)
 
@@ -422,6 +420,58 @@ def process_bag_file(bag_file, output_dir, PIG_ID):
     finally:
         pipeline.stop()
 
+def count_frames_in_bag(bag_file, stream_type=rs.stream.depth):
+    """
+    计算 .bag 文件中的帧数。
+
+    Args:
+        bag_file (str): .bag 文件路径。
+    Returns:
+        int: 文件中的总帧数。
+    """
+    pipeline = rs.pipeline()
+    config = rs.config()
+    config.enable_device_from_file(bag_file)
+
+    frame_count = 0
+
+    try:
+        pipeline.start(config)
+        print(f"Counting frames in {bag_file}...")
+        while True:
+            frames = pipeline.wait_for_frames()
+            frame = frames.first_or_default(stream_type)  # 获取指定类型的流
+            if frame:
+                print(frame_count)
+                frame_count += 1
+                
+    except RuntimeError:
+        # 到达文件结尾会抛出 RuntimeError
+        print(f"End of bag file reached. Total frames: {frame_count}")
+    finally:
+        pipeline.stop()
+
+    return frame_count
+
+def get_stream_profiles(bag_file):
+    """
+    获取 .bag 文件中数据流的配置，例如分辨率和帧率。
+
+    Args:
+        bag_file (str): .bag 文件路径。
+    """
+    pipeline = rs.pipeline()
+    config = rs.config()
+    config.enable_device_from_file(bag_file)
+
+    try:
+        pipeline.start(config)
+        profile = pipeline.get_active_profile()
+        for stream in profile.get_streams():
+            video_stream = stream.as_video_stream_profile()
+            print(f"Stream: {stream.stream_type()} | Resolution: {video_stream.width()}x{video_stream.height()} | FPS: {video_stream.fps()}")
+    finally:
+        pipeline.stop()
 
 def extract_frames_from_bag(bag_file, output_dir):
     """
@@ -495,15 +545,21 @@ if __name__ == "__main__":
     # streamSensorRaw(1, cameraPipeline, cameraConfig, 1, 30)
     
     # print(f"运行时间: {end_time - start} 秒")
-    # cameral_test()
-    path = 'output_bag/'
-    os.makedirs(path, exist_ok=True)
-    record_bag("output_bag/record_88.bag", record_time=1)
+    cameral_test()
+    # path = 'output_bag/'
+    # os.makedirs(path, exist_ok=True)
+    # record_bag("output_bag/record.bag", record_time=1)
     
-    bag_file = "output_bag/record88.bag"
-    output_dir = "output_bag/processed"
-    PIG_ID = 12345
+    # bag_file = "/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2024/ID_03_50221/bag/pig_50221_2024_12_09_14_05_57.bag"
+    # bag_file = 'output_bag/record.bag'
+    # output_dir = "output_bag/processed"
+    # PIG_ID = 12345
 
     # process_bag_file(bag_file, output_dir, PIG_ID)
-    # extract_frames_from_bag(bag_file, output_dir)
     
+    # 示例调用
+    # bag_file = "output/record.bag"
+    # total_frames = count_frames_in_bag(bag_file)
+    # print(f"Total frames in {bag_file}: {total_frames}")
+    # get_stream_profiles(bag_file)
+    # extract_frames_from_bag(bag_file, output_dir)

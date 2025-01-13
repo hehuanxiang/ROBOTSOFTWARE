@@ -147,6 +147,34 @@ def count_total_distance():
     total_time = motor_end_time - motor_start_time
     
     print(f"Totla distance cost {total_time}")
+    
+def count_stop_delay():
+    '''
+    用于统计磁感应器的范围
+    '''
+    stepCount = 0
+    Step_to_leave_resetpoint = 0
+    # 设置电机旋转方向
+    GPIO.output(DIR,0)
+    preStop = False
+    
+    while True:
+        stopSensor = GPIO.input(stopPin)
+        if stopSensor == 0:
+            stepCount += 1
+            preStop = True
+            print(stepCount)
+            # print("Start to count the step")
+            
+        GPIO.output(STEP,True)
+        sleep(0.000001)
+        GPIO.output(STEP,False)
+        
+        if preStop and stopSensor == 1:
+            break
+        
+    
+    print(f"Totla distance cost {stepCount}")
 
 def back_to_dock():
     # 设置电机旋转方向
@@ -277,7 +305,7 @@ def reset():
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Motor control script for Raspberry Pi.")
-    parser.add_argument("command", nargs="?", choices=["ahead", "back", "reset", "test"],
+    parser.add_argument("command", nargs="?", choices=["ahead", "back", "reset", "test", "delay"],
                         help="System go ahead to the end or back to the reset point.")
     parser.add_argument("--distance", type=int, default=100, help="Total distance for counting the interval between two stall.")
     parser.add_argument("--step", action="store_true", help = "Caculate the needed steps between resetponint and the first magnet point, steps between the first magenet point and the second one")
@@ -293,6 +321,8 @@ if __name__ == "__main__":
             reset()
         elif args.command == "test":
             test_stop()
+        elif args.command == "delay":
+            count_stop_delay()
         if args.step:
             get_steps()
 

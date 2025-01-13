@@ -448,6 +448,17 @@ rs-enumerate-devices
     + **Ctrl+O** 保存修改。
     + **Ctrl+X** 退出编辑器。
 
+4. 增加日志保存
+可以在service文件增加
+```bash
+StandardOutput=append:/var/log/download_from_barn.log
+StandardError=append:/var/log/download_from_barn_error.log
+```
+可以使用命令查看
+```bash
+tail -f /var/log/download_from_barn.log
+```
+
 ---
 
 ## 创建定时器文件
@@ -518,3 +529,46 @@ rs-enumerate-devices
     sudo systemctl daemon-reload
     sudo systemctl restart reboot_pi.timer
     ```
+
+# 从树莓派下载文件到本地
+rsync 是一个快速、灵活、强大的工具，用于在本地或远程设备之间同步文件和目录。它支持 增量同步，只传输发生变化的部分内容，因此效率非常高。rsync 是许多数据备份、文件迁移和服务器部署任务的首选工具。
+```bash
+    
+#!/bin/bash
+
+# 配置参数
+PI_USER="pi"                                                 # 树莓派用户名
+PI_HOST="192.168.193.110"                                    # 树莓派IP地址
+REMOTE_PATH="/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2024_12"  # 树莓派数据路径
+LOCAL_PATH="/mnt/d/Alpha_New_Farm_DATA/Data_Estrus_2024_12"             # WSL下的Windows路径
+LOG_FILE="./transfer_$(date +%Y%m%d_%H%M%S).log"             # 日志文件，带时间戳
+
+# 确保本地目录存在
+echo "Ensuring the local path exists..."
+mkdir -p "${LOCAL_PATH}"
+
+echo "Starting data transfer from Raspberry Pi to local machine..."
+
+# 使用 rsync 拉取数据
+rsync -avz --ignore-existing --exclude="ID_00_0" --progress "${PI_USER}@${PI_HOST}:${REMOTE_PATH}/" "${LOCAL_PATH}/"
+
+echo "Data transfer complete!"
+
+```
+
+| 选项                    | 含义                                                           |
+|-------------------------|---------------------------------------------------------------|
+| `-a`（`--archive`）      | 归档模式，递归复制目录并保留文件属性（权限、时间戳等）。         |
+| `-v`（`--verbose`）      | 显示详细的输出信息。                                           |
+| `-z`                    | 在传输时启用压缩，减少数据量（适合文本文件）。                  |
+| `-P`                    | 显示进度条并支持断点续传，相当于 `--progress` 和 `--partial`。   |
+| `--delete`              | 删除目标目录中多余的文件，使目标目录和源目录完全一致。           |
+| `--exclude=PATTERN`     | 排除符合模式的文件或目录。                                      |
+| `--remove-source-files` | 删除已成功传输的源文件。                                        |
+| `--dry-run`             | 模拟执行，不实际传输数据，用于测试命令是否正确。                |
+| `-e ssh`                | 指定使用 SSH 协议进行远程传输。                                |
+
+# 命令行查看最新日志文件
+```bash
+tail -n 10 2024-12-17_robot_log.log
+```
