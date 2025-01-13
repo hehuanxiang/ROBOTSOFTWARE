@@ -19,12 +19,12 @@
                 200199,
                 200984],
     "pins": {
-        "endPin": 22,
+        "endPin": 18,
         "resetPin": 16,
-        "magnetPin": 18,
-        "DIR": 38,
-        "ENA": 36,
-        "STEP": 40
+        "magnetPin": 37,
+        "DIR": 15,
+        "ENA": 7,
+        "STEP": 31
     },
     "stallNumber": 20
 }
