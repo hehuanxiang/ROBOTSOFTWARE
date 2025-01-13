@@ -5,7 +5,7 @@ import argparse
 import json
 
 with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
-        farm_config = json.load(file)
+    farm_config = json.load(file)
         
 
 

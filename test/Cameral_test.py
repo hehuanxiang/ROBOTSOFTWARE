@@ -274,7 +274,7 @@ class saveDataThread(threading.Thread):
             j=j+1
         print("save  PIG ID_" + str(PIG_ID) + " data success "+str(self.threadID))
 
-def record_bag(output_file, record_time=10):
+def record_bag(output_file, record_time=1):
     """
     录制 RealSense 数据到 .bag 文件。
 
@@ -302,6 +302,7 @@ def record_bag(output_file, record_time=10):
         start_time = time.time()
 
         while time.time() - start_time < record_time:
+        # for _ in range(30):
             frames = pipeline.wait_for_frames()
             # 显示彩色帧（可选）
             color_frame = frames.get_color_frame()
@@ -422,6 +423,64 @@ def process_bag_file(bag_file, output_dir, PIG_ID):
         pipeline.stop()
 
 
+def extract_frames_from_bag(bag_file, output_dir):
+    """
+    从 .bag 文件中提取深度、红外和 RGB 帧，并保存到指定目录。
+
+    Args:
+        bag_file (str): .bag 文件路径。
+        output_dir (str): 输出保存帧的目录。
+    """
+    pipeline = rs.pipeline()
+    config = rs.config()
+    config.enable_device_from_file(bag_file)
+
+    # 创建输出目录
+    os.makedirs(output_dir, exist_ok=True)
+    depth_dir = os.path.join(output_dir, "depth")
+    infrared_dir = os.path.join(output_dir, "infrared")
+    color_dir = os.path.join(output_dir, "color")
+    os.makedirs(depth_dir, exist_ok=True)
+    os.makedirs(infrared_dir, exist_ok=True)
+    os.makedirs(color_dir, exist_ok=True)
+
+    try:
+        pipeline.start(config)
+        print(f"Extracting frames from {bag_file}...")
+        frame_count = 0
+
+        while True:
+            frames = pipeline.wait_for_frames()
+
+            # 提取深度帧
+            depth_frame = frames.get_depth_frame()
+            if depth_frame:
+                depth_image = np.asanyarray(depth_frame.get_data())
+                depth_file = os.path.join(depth_dir, f"depth_{frame_count:04d}.png")
+                cv2.imwrite(depth_file, depth_image)
+
+            # 提取红外帧
+            infrared_frame = frames.get_infrared_frame()
+            if infrared_frame:
+                infrared_image = np.asanyarray(infrared_frame.get_data())
+                infrared_file = os.path.join(infrared_dir, f"infrared_{frame_count:04d}.png")
+                cv2.imwrite(infrared_file, infrared_image)
+
+            # 提取彩色帧
+            color_frame = frames.get_color_frame()
+            if color_frame:
+                color_image = np.asanyarray(color_frame.get_data())
+                color_file = os.path.join(color_dir, f"color_{frame_count:04d}.jpg")
+                cv2.imwrite(color_file, color_image)
+
+            frame_count += 1
+
+    except RuntimeError:
+        # 结束文件处理
+        print(f"Finished extracting frames. Total frames: {frame_count}")
+    finally:
+        pipeline.stop()
+
 if __name__ == "__main__":
     # start = time.time()
     # cameraPipeline, cameraConfig = setupCamera()
@@ -439,10 +498,12 @@ if __name__ == "__main__":
     # cameral_test()
     path = 'output_bag/'
     os.makedirs(path, exist_ok=True)
-    record_bag("output_bag/record.bag", record_time=1)
+    record_bag("output_bag/record_88.bag", record_time=1)
     
-    bag_file = "output_bag/record.bag"
+    bag_file = "output_bag/record88.bag"
     output_dir = "output_bag/processed"
     PIG_ID = 12345
 
-    process_bag_file(bag_file, output_dir, PIG_ID)
+    # process_bag_file(bag_file, output_dir, PIG_ID)
+    # extract_frames_from_bag(bag_file, output_dir)
+    

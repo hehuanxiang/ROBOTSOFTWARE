@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 from time import sleep
+import json
 class Sensor:
     def __init__(self, pin, name="Sensor"):
         self.pin = pin
@@ -19,14 +20,27 @@ class Sensor:
 
 # 示例用法：灵活测试不同传感器
 def main():
+    
+    with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
+        farm_config = json.load(file)
+        
+
+
+    # 读取电机的控制以及各个sensor的pin码
+    pins = farm_config["pins"]
+
+    endPin = pins["endPin"]
+    resetPin = pins["resetPin"]
+    stopPin = pins["magnetPin"]
+    
     # 初始化不同的传感器
-    magnet_sensor = Sensor(pin=37, name="Magnet")
+    magnet_sensor = Sensor(pin=stopPin, name="Magnet")
     
     # 2024年11月15日10点34分，调换stop和reset
     # stop_sensor = Sensor(pin=16, name="Stop")
     # reset_sensor = Sensor(pin=18, name="Reset")
-    stop_sensor = Sensor(pin=18, name="Stop")
-    reset_sensor = Sensor(pin=16, name="Reset")
+    stop_sensor = Sensor(pin=endPin, name="Stop")
+    reset_sensor = Sensor(pin=resetPin, name="Reset")
     
     # 测试每个传感器的状态
     i = 0
