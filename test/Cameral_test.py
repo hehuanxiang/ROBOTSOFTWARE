@@ -46,7 +46,8 @@ def cameral_test():
     try:
         while frame_count < 10:
             # 等待帧并获取数据
-            frames = pipeline.wait_for_frames()
+            # frames = pipeline.wait_for_frames()
+            frames = pipeline.poll_for_frames()  # 非阻塞
 
             # 获取深度、彩色和红外帧
             depth_frame = frames.get_depth_frame()

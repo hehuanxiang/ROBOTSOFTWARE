@@ -21,6 +21,7 @@ import logging
 import multiprocessing
 from logging.handlers import QueueHandler
 import psutil
+from concurrent.futures import ThreadPoolExecutor
 
 
 def setup_logger(logger_name, log_queue):
@@ -130,6 +131,70 @@ class saveDataThread(threading.Thread):
     def stop(self):
         """设置停止事件，安全终止线程。"""
         self.stop_event.set()
+
+def save_data(frameset, i, path, PIG_ID, time_stamp, intr, log_queue, stallId, callback=None):
+    """
+    同步执行数据保存任务，不使用线程。
+    """
+    try:
+        # 日志设置
+        logger = setup_logger(f"saveData-Stall_{stallId}", log_queue)
+        logger.info(f"开始保存 Stall_{stallId}，猪 ID: {PIG_ID} 的数据到路径: {path}")
+
+        # 相机内参和路径设置
+        depth_threshold = rs.threshold_filter(min_dist=0.1, max_dist=2.5)
+        colorizer = rs.colorizer()
+        t = time_stamp
+        j = 1
+        imgname = f"{PIG_ID}_{t.year}_{t.month}_{t.day}_{t.hour}_{t.minute}_{t.second}_"
+
+        for frame in frameset:
+            # 提取帧数据
+            color_frame = frame.get_color_frame()
+            depth_frame = frame.get_depth_frame()
+            ir_frame = frame.get_infrared_frame()
+
+            # 转换帧为 numpy 数组
+            depth_image = np.asanyarray(depth_frame.get_data())
+            color_image = np.asanyarray(color_frame.get_data())
+            ir_image = np.asanyarray(ir_frame.get_data())
+
+            # 计算点云数据
+            XX, YY, ZZ = np.zeros((480, 640)), np.zeros((480, 640)), np.zeros((480, 640))
+            for y in range(480):
+                for x in range(640):  # 修正错误：将 x 范围改为 640
+                    dist = depth_frame.get_distance(x, y)
+                    X, Y, Z = convert_depth_pixel_to_metric_coordinate(dist, x, y, intr)
+                    XX[y, x] = X
+                    YY[y, x] = Y
+                    ZZ[y, x] = Z
+
+            obj = np.stack((XX, YY, ZZ))
+
+            # 创建保存路径
+            os.makedirs(os.path.join(path, "DM"), exist_ok=True)
+            os.makedirs(os.path.join(path, "depth"), exist_ok=True)
+            os.makedirs(os.path.join(path, "RGB"), exist_ok=True)
+            os.makedirs(os.path.join(path, "IR"), exist_ok=True)
+
+            # 保存数据
+            matfile = os.path.join(path, "DM", f"{imgname}{j}.mat")
+            scipy.io.savemat(matfile, mdict={"out": obj}, oned_as="row")
+            imageio.imwrite(os.path.join(path, "depth", f"{imgname}{j}.png"), depth_image)
+            imageio.imwrite(os.path.join(path, "RGB", f"{imgname}{j}.png"), color_image)
+            imageio.imwrite(os.path.join(path, "IR", f"{imgname}{j}.png"), ir_image)
+
+            logger.info(f"成功保存第 {j} 帧数据：{imgname}{j}")
+            j += 1
+
+        logger.info(f"完成保存 Stall_{stallId}，猪 ID {PIG_ID} 的数据。")
+        return True
+
+    except Exception as e:
+        logger = setup_logger(f"saveData-Stall_{stallId}", log_queue)
+        logger.error(f"保存 Stall_{stallId}，猪 ID {PIG_ID} 数据时发生错误", exc_info=True)
+        return False
+
 
 class RecordBagThread(threading.Thread):
     def __init__(self, stallId, pigID, log_queue, pipeline:rs.pipeline, config:rs.config, record_time):
@@ -324,20 +389,21 @@ def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
             key = cv2.waitKey(1)
 
             if x%interval==0: #60
+                logger.info(f"成功捕获第{x}帧并对齐")
                 frameset.append(aligned_frames)
-                logger.info("深度图像捕获完成")
+                break
     except:   
         # pipeline.stop()
         logger.info("相机无法正常获取图像")
     try:
-        thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId, callback=callback)
-        thread1.start()
-        logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{pig_ID}的数据")
-        sleep(2)
-    except:
-        thread1.stop()
-        logger.error("保存线程启动失败", exc_info=True)
-    logger.info("图像捕获成功并正在保存数据")
+        save_data(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId)
+        # thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId, callback=callback)
+        # thread1.start()
+        # logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{pig_ID}的数据")
+        # sleep(3)
+    except Exception as e:
+        logger.error("保存数据过程出错", exc_info=True)
+    logger.info("图像捕获成功并成功保存数据")
 
 def get_sensor():
     ctx = rs.context()
@@ -387,7 +453,7 @@ def handle_stop(sign, testStepper):
         elif sign == "right_end":
             print("end3")
             #action = testStepper.step(5000, "right", 50, docking = False)
-            action = testStepper.step(10000000, "back", 50, docking = True)        
+            action = testStepper.step(10000000, "back", 0.05, docking = True)        
             handle_stop(action, testStepper)
 
 def logger_process(log_queue):
@@ -408,8 +474,17 @@ def logger_process(log_queue):
             logger.handle(record)
         except Exception as e:
             print(f"日志进程错误: {e}")
+            
+def task_callback(future):
+    thread_id = future.result()
+    print(f"回调：任务由线程 {thread_id} 执行完成。")
 
 def main(log_queue):
+    
+    # 创建线程池，最大线程数根据实际情况调整
+    max_workers = 4  # 可根据树莓派的性能调整
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    
     """主程序逻辑"""
     logger = logging.getLogger("main")
     logger.addHandler(logging.handlers.QueueHandler(log_queue))
@@ -417,7 +492,7 @@ def main(log_queue):
 
     try:
         logger.info("加载 farm_config.json 配置文件")
-        with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json', 'r') as file:
+        with open('/home/pi/Desktop/ROBOTSOFTWARE/farm_config_lab.json', 'r') as file:
             farm_config = json.load(file)
 
         pigNumber = farm_config["pigNumber"]
@@ -468,22 +543,43 @@ def main(log_queue):
             max_retries = 3  # 设置最大重试次数
             retry_delay = 30  # 每次重试的间隔时间（秒）
 
-            
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"尝试启动相机pipeline (第 {attempt + 1} 次)")
+                    profile = cameraPipeline.start(cameraConfig)
+                    logger.info("相机启动成功")
+                    break  # 启动成功后跳出循环
+                except Exception as e:
+                    logger.error(f"相机pipeline启动失败 (第 {attempt + 1} 次): {e}")
+                    
+                    # 如果还未达到最大重试次数，进行清理并等待
+                    if attempt < max_retries - 1:
+                        try:
+                            logger.info("尝试停止相机pipeline以清理状态")
+                            cameraPipeline.stop()
+                        except Exception as stop_error:
+                            logger.warning(f"相机pipeline停止失败: {stop_error}")
+                        
+                        logger.info(f"{retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)  # 等待后再次尝试
+                    else:
+                        logger.critical("多次尝试启动相机pipeline均失败，放弃重试")
+                        raise e  # 抛出异常以供上层处理
                 
             for i in range(stallNumber):
                 try:
                     if i == 0:
                         logger.info(f"快速接近：Stall_{i}")
                         # action = testStepper.step(90000, "forward", 1, docking=False)
-                        action = testStepper.step(55000, "forward", 1, docking=False)
+                        action = testStepper.step(20000, "forward", 1, docking=False)
                         logger.info(f"即将抵达：Stall_{i}，减速接近")
-                        action = testStepper.step(35000, "forward", 0.05, docking=False)
+                        action = testStepper.step(20000, "forward", 0.05, docking=False)
                     else:
                         logger.info(f"快速接近：Stall_{i}")
                         # action = testStepper.step(70000, "forward", 1, docking=False)
-                        action = testStepper.step(25000, "forward", 1, docking=False)
+                        action = testStepper.step(60000, "forward", 1, docking=False)
                         logger.info(f"即将抵达：Stall_{i}，减速接近")
-                        action = testStepper.step(30000, "forward", 0.05, docking=False)
+                        action = testStepper.step(25000, "forward", 0.05, docking=False)
 
                     handle_stop(action, testStepper)
                     logger.info(f"抵达：Stall_{i}")
@@ -491,32 +587,13 @@ def main(log_queue):
                     if pigNumber[i] != 0:
                         logger.info(f"处理在Stall_{i}的猪，ID: {pigNumber[i]} ")
                         
-                        for attempt in range(max_retries):
-                            try:
-                                logger.info(f"尝试启动相机pipeline (第 {attempt + 1} 次)")
-                                profile = cameraPipeline.start(cameraConfig)
-                                logger.info("相机启动成功")
-                                break  # 启动成功后跳出循环
-                            except Exception as e:
-                                logger.error(f"相机pipeline启动失败 (第 {attempt + 1} 次): {e}")
-                                
-                                # 如果还未达到最大重试次数，进行清理并等待
-                                if attempt < max_retries - 1:
-                                    try:
-                                        logger.info("尝试停止相机pipeline以清理状态")
-                                        cameraPipeline.stop()
-                                    except Exception as stop_error:
-                                        logger.warning(f"相机pipeline停止失败: {stop_error}")
-                                    
-                                    logger.info(f"{retry_delay} 秒后重试...")
-                                    time.sleep(retry_delay)  # 等待后再次尝试
-                                else:
-                                    logger.critical("多次尝试启动相机pipeline均失败，放弃重试")
-                                    raise e  # 抛出异常以供上层处理
+
                         
                         # 线程仅仅用于保存数据
-                       
-                        streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
+                        
+                        data_task = executor.submit(streamSensor, pigNumber[i], cameraPipeline, profile, i, log_queue)
+                        # data_task.add_done_callback(task_callback)
+                        # streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
                         
                         # 线程负责整个数据采集以及保存
                         # streamThread = streamSensorThread(pigNumber[i], cameraPipeline, profile, i, log_queue, callback=callback)
@@ -530,11 +607,10 @@ def main(log_queue):
                         
                 except Exception as e:
                     logger.error(f"当前：Stall_{i}猪猪成像过程中发生错误", exc_info=True)
-                finally:
-                    if pigNumber[i] != 0:
-                        cameraPipeline.stop()
-                        logger.info("关闭相机pipeline")
-            
+
+                        
+            cameraPipeline.stop()
+            logger.info("关闭相机pipeline")
             logger.info(f"开始返回起始点，时间: {datetime.datetime.now()}")
             action = testStepper.step(150000 * 24, "back", 1000, docking=True)
             logger.info(f"返回到起始点，时间: {datetime.datetime.now()}")

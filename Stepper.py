@@ -142,7 +142,7 @@ class Stepper:
             endStatus[1] = endStatus[2]  
             endStatus[2] = gpio.input(self.endPin)
             #print(gpio.input(self.magPin))
-            if sum(endStatus) == 0:
+            if (preEndStatus == 1 and sum(endStatus) == 0) :
                 sleep(1)
                 direction=False          # 到了终点，电机应该停止前进，True为前进
                 steps=1000000

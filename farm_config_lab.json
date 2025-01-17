@@ -6,8 +6,8 @@
         "resetPin": 16,
         "magnetPin": 18,
         "DIR": 38,
-        "ENA": 36,
+        "ENA": 35,
         "STEP": 40
     },
-    "stallNumber": 20
+    "stallNumber": 4
 }
