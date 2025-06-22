@@ -21,6 +21,7 @@ import logging
 import multiprocessing
 from logging.handlers import QueueHandler
 import psutil
+from concurrent.futures import ThreadPoolExecutor
 
 
 def setup_logger(logger_name, log_queue):
@@ -56,7 +57,7 @@ class saveDataThread(threading.Thread):
     def run(self):
         try: 
             #set clip depth
-            
+            start = time.time()
             intr=self.intr
             depth_threshold=rs.threshold_filter(min_dist=0.1, max_dist=2.5)
             colorizer=rs.colorizer()
@@ -122,6 +123,9 @@ class saveDataThread(threading.Thread):
             # self.logger.info(f"Stall_{self.stallId}，猪 ID {PIG_ID} 数据保存完成，线程 ID: {self.threadID}")
             self.data_saved = True
             
+            end = time.time()
+            self.logger.info(f"保存stall：Stall_{self.stallId}，猪 ID: {PIG_ID} 的数据到路径: {path} 花费 {end - start} s")
+            
         except Exception as e:
             self.data_saved = False
             self.logger.error(f"Stall_{self.stallId}，保存猪 ID {self.PIG_ID} 数据时发生错误", exc_info=True)
@@ -130,6 +134,55 @@ class saveDataThread(threading.Thread):
     def stop(self):
         """设置停止事件，安全终止线程。"""
         self.stop_event.set()
+
+
+def save_data_task(frameset, index, path, pig_ID, timestamp, intr, log_queue, stallId):
+    try:
+        logger = setup_logger(f"saveDataTask-Stall_{stallId}", log_queue)
+        start = time.time()
+        imgname = f"{pig_ID}_{timestamp.year}_{timestamp.month}_{timestamp.day}_{timestamp.hour}_{timestamp.minute}_{timestamp.second}_"
+        logger.info(f"开始保存 Stall_{stallId}, 猪 ID {pig_ID} 的数据到路径: {path}")
+        
+        j = 1
+        for frame in frameset:
+            # 数据处理
+            depth_frame = frame.get_depth_frame()
+            color_frame = frame.get_color_frame()
+            ir_frame = frame.get_infrared_frame()
+
+            depth_image = np.asanyarray(depth_frame.get_data())
+            color_image = np.asanyarray(color_frame.get_data())
+            ir_image = np.asanyarray(ir_frame.get_data())
+
+            XX, YY, ZZ = np.zeros((480, 640)), np.zeros((480, 640)), np.zeros((480, 640))
+            for y in range(480):
+                for x in range(480):
+                    dist = depth_frame.get_distance(x + 80, y)
+                    X, Y, Z = convert_depth_pixel_to_metric_coordinate(dist, x, y, intr)
+                    XX[y, x] = X
+                    YY[y, x] = Y
+                    ZZ[y, x] = Z
+
+            obj = np.stack((XX, YY, ZZ))
+
+            # 确保目录存在
+            os.makedirs(os.path.join(path, "DM"), exist_ok=True)
+            os.makedirs(os.path.join(path, "depth"), exist_ok=True)
+            os.makedirs(os.path.join(path, "RGB"), exist_ok=True)
+            os.makedirs(os.path.join(path, "IR"), exist_ok=True)
+
+            # 保存文件
+            scipy.io.savemat(os.path.join(path, "DM", f"{imgname}{j}.mat"), mdict={"out": obj}, oned_as="row")
+            cv2.imwrite(os.path.join(path, "depth", f"{imgname}{j}.png"), depth_image)
+            cv2.imwrite(os.path.join(path, "RGB", f"{imgname}{j}.png"), color_image)
+            cv2.imwrite(os.path.join(path, "IR", f"{imgname}{j}.png"), ir_image)
+
+            j += 1
+
+        logger.info(f"完成保存 Stall_{stallId}, 猪 ID {pig_ID} 的数据，总耗时: {time.time() - start:.2f} 秒")
+
+    except Exception as e:
+        logger.error(f"保存 Stall_{stallId}, 猪 ID {pig_ID} 数据失败", exc_info=True)
 
 class RecordBagThread(threading.Thread):
     def __init__(self, stallId, pigID, log_queue, pipeline:rs.pipeline, config:rs.config, record_time):
@@ -257,7 +310,7 @@ class streamSensorThread(threading.Thread):
         finally:
             self.logger.info("图像捕获线程结束")
 
-def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
+def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue, executor):
     logger = setup_logger("streamSensor", log_queue)
     
     pipeline = cameraPipeline
@@ -324,19 +377,21 @@ def streamSensor(pigID, cameraPipeline, profile, stallId, log_queue):
             key = cv2.waitKey(1)
 
             if x%interval==0: #60
+                logger.info(f"保存第{x}帧")
                 frameset.append(aligned_frames)
                 logger.info("深度图像捕获完成")
+                break
     except:   
         # pipeline.stop()
         logger.info("相机无法正常获取图像")
     try:
-        thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId, callback=callback)
-        thread1.start()
-        logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{pig_ID}的数据")
-        sleep(2)
-    except:
-        thread1.stop()
-        logger.error("保存线程启动失败", exc_info=True)
+        executor.submit(save_data_task, frameset, int(x / interval), path, pig_ID, t, profile.get_stream(rs.stream.depth).as_video_stream_profile().get_intrinsics(), log_queue, stallId)
+        logger.info(f"启动保存线程 开始保存猪_{pig_ID}的数据")
+        # thread1 = saveDataThread(frameset,int(x/interval),path, pig_ID, t,intr, log_queue, stallId, callback=callback)
+        # thread1.start()
+        # logger.info(f"启动保存线程: {thread1.threadID} 开始保存猪_{pig_ID}的数据")
+    except Exception as e:
+        logger.error("线程异常", exc_info=True)
     logger.info("图像捕获成功并正在保存数据")
 
 def get_sensor():
@@ -411,6 +466,10 @@ def logger_process(log_queue):
 
 def main(log_queue):
     """主程序逻辑"""
+    
+    max_workers = 4  # 根据树莓派性能设置线程池大小
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    
     logger = logging.getLogger("main")
     logger.addHandler(logging.handlers.QueueHandler(log_queue))
     logger.setLevel(logging.DEBUG)
@@ -516,7 +575,7 @@ def main(log_queue):
                         
                         # 线程仅仅用于保存数据
                        
-                        streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue)
+                        streamSensor(pigNumber[i], cameraPipeline, profile, i, log_queue, executor)
                         
                         # 线程负责整个数据采集以及保存
                         # streamThread = streamSensorThread(pigNumber[i], cameraPipeline, profile, i, log_queue, callback=callback)
