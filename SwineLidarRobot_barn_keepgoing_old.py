@@ -38,6 +38,114 @@ def setup_logger(logger_name, log_queue):
         logger.setLevel(logging.DEBUG)
     return logger
 
+
+def save_data(frameset, i, path, PIG_ID, time_stamp, intr, log_queue, stallId, callback=None):
+    """
+    同步执行数据保存任务，不使用线程。
+    """
+    try:
+        # 日志设置
+        logger = setup_logger(f"saveData-Stall_{stallId}", log_queue)
+        logger.info(f"开始保存 Stall_{stallId}，猪 ID: {PIG_ID} 的数据到路径: {path}")
+
+        # 相机内参和路径设置
+        depth_threshold = rs.threshold_filter(min_dist=0.1, max_dist=2.5)
+        colorizer = rs.colorizer()
+        t = time_stamp
+        j = 1
+        imgname = f"{PIG_ID}_{t.year}_{t.month}_{t.day}_{t.hour}_{t.minute}_{t.second}"
+
+        for frame in frameset:
+            # 提取帧数据
+            color_frame = frame.get_color_frame()
+            depth_frame = frame.get_depth_frame()
+            ir_frame = frame.get_infrared_frame()
+
+            # 转换帧为 numpy 数组
+            depth_image = np.asanyarray(depth_frame.get_data())
+            color_image = np.asanyarray(color_frame.get_data())
+            ir_image = np.asanyarray(ir_frame.get_data())
+
+            # 计算点云数据
+            XX, YY, ZZ = np.zeros((480, 640)), np.zeros((480, 640)), np.zeros((480, 640))
+            for y in range(480):
+                for x in range(640):  # 修正错误：将 x 范围改为 640
+                    dist = depth_frame.get_distance(x, y)
+                    X, Y, Z = convert_depth_pixel_to_metric_coordinate(dist, x, y, intr)
+                    XX[y, x] = X
+                    YY[y, x] = Y
+                    ZZ[y, x] = Z
+
+            obj = np.stack((XX, YY, ZZ))
+
+            # 创建保存路径
+            os.makedirs(os.path.join(path, "DM"), exist_ok=True)
+            os.makedirs(os.path.join(path, "depth"), exist_ok=True)
+            os.makedirs(os.path.join(path, "RGB"), exist_ok=True)
+            os.makedirs(os.path.join(path, "IR"), exist_ok=True)
+
+            # 保存数据
+            matfile = os.path.join(path, "DM", f"{imgname}.mat")
+            scipy.io.savemat(matfile, mdict={"out": obj}, oned_as="row")
+            imageio.imwrite(os.path.join(path, "depth", f"{imgname}.png"), depth_image)
+            imageio.imwrite(os.path.join(path, "RGB", f"{imgname}.png"), color_image)
+            imageio.imwrite(os.path.join(path, "IR", f"{imgname}.png"), ir_image)
+
+            logger.info(f"成功保存第 {j} 帧数据：{imgname}{j}")
+            j += 1
+
+        logger.info(f"完成保存 Stall_{stallId}，猪 ID {PIG_ID} 的数据。")
+        return True
+
+    except Exception as e:
+        logger = setup_logger(f"saveData-Stall_{stallId}", log_queue)
+        logger.error(f"保存 Stall_{stallId}，猪 ID {PIG_ID} 数据时发生错误", exc_info=True)
+        return False
+
+def build_point_cloud_and_save_as_mat(depth_image_path, intrinsics, output_path):
+    """
+    根据深度图和相机内参构建点云数据，并保存为 .mat 文件。
+
+    参数:
+        depth_image_path (str): 深度图像文件的路径（.png）。
+        intrinsics (rs.intrinsics): RealSense相机的内参，用于像素坐标到三维坐标的转换。
+        output_path (str): 输出 .mat 文件的路径。
+    """
+    # 读取深度图
+    depth_image = cv2.imread(depth_image_path, cv2.IMREAD_UNCHANGED)
+    if depth_image is None:
+        raise FileNotFoundError(f"深度图像未找到: {depth_image_path}")
+
+    # 获取深度图的形状
+    height, width = depth_image.shape
+
+    # 生成像素网格
+    y, x = np.meshgrid(np.arange(height), np.arange(width), indexing='ij')
+
+    # 将深度图像数据转换为实际深度值（单位：米）
+    depth_scale = 0.001  # 假设深度图保存时以毫米为单位（根据实际情况调整）
+    depth_values = depth_image * depth_scale
+
+    # 初始化点云数组
+    XX = np.zeros_like(depth_values, dtype=np.float32)
+    YY = np.zeros_like(depth_values, dtype=np.float32)
+    ZZ = np.zeros_like(depth_values, dtype=np.float32)
+
+    # 将像素坐标和深度值转换为点云坐标
+    for i in range(height):
+        for j in range(width):
+            depth = depth_values[i, j]
+            if depth > 0:  # 确保深度值有效
+                X, Y, Z = rs.rs2_deproject_pixel_to_point(intrinsics, [j, i], depth)
+                XX[i, j] = X
+                YY[i, j] = Y
+                ZZ[i, j] = Z
+
+    # 保存点云数据到 .mat 文件
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    scipy.io.savemat(output_path, {"XX": XX, "YY": YY, "ZZ": ZZ})
+    print(f"点云数据已保存到: {output_path}")
+
 def streamSensorLite(pigID, cameraPipeline, profile, stallId, log_queue):
     logger = setup_logger("streamSensor", log_queue)
     logger.info("🐷 开始采集数据")

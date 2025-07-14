@@ -30,7 +30,7 @@ def extract_last_images_from_all_ir_folders(root_folder, target_folder):
                 print(f"最新的图片 {os.path.basename(latest_file)} 已复制到 {target_subfolder}。")
 
 # 示例用法
-root_folder = "/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2025_03"  # 替换为你的根文件夹路径
+root_folder = "/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2025_07"  # 替换为你的根文件夹路径
 time = datetime.datetime.now()
 target_folder = f"Latest_IR_Images/{str(time.date())}_{str(time.hour)}_check"  # 替换为你的目标文件夹路径
 

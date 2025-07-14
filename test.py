@@ -1,18 +1,17 @@
-from evdev import InputDevice, categorize, ecodes
+import pyrealsense2.pyrealsense2 as rs
+import numpy as np
+import cv2
 
-# 获取键盘设备（可通过 `ls /dev/input` 找到设备路径）
-device = InputDevice('/dev/input/by-id')
+pipeline = rs.pipeline()
+config = rs.config()
 
-print("监听全局键盘事件，按 ESC 退出程序")
+config.enable_device('f1370816')  # 你设备的序列号
+config.enable_stream(rs.stream.depth, 320, 240, rs.format.z16, 30)
+config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
-for event in device.read_loop():
-    if event.type == ecodes.EV_KEY:
-        key_event = categorize(event)
-        if key_event.keystate == 1:  # 按键按下事件
-            if key_event.keycode == 'KEY_UP':
-                print("检测到 ↑ 上方向键")
-            elif key_event.keycode == 'KEY_DOWN':
-                print("检测到 ↓ 下方向键")
-            elif key_event.keycode == 'KEY_ESC':
-                print("检测到 ESC 键，退出程序")
-                break
+try:
+    profile = pipeline.start(config)
+    print("✅ 启动成功")
+    pipeline.stop()
+except RuntimeError as e:
+    print("❌ 启动失败：", e)

@@ -22,9 +22,9 @@ def cameral_test():
     config = rs.config()
 
     # 启用深度、彩色和红外流
-    config.enable_stream(rs.stream.depth, 1024, 768, rs.format.z16, 30)  # 深度流
-    config.enable_stream(rs.stream.color, 1920,1080, rs.format.bgr8, 30)  # 彩色流
-    config.enable_stream(rs.stream.infrared, 0, 1024,768, rs.format.y8, 30)  # 红外流
+    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)  # 深度流
+    config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)  # 彩色流
+    config.enable_stream(rs.stream.infrared, 0, 640, 480, rs.format.y8, 30)  # 红外流
     # config.enable_stream(rs.stream.infrared,0,848,480,rs.format.y8,30)
 
     # 启动流

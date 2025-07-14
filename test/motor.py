@@ -233,7 +233,7 @@ def test_stop():
     
     # Set motor rotation direction
     GPIO.output(DIR, 0)
-    waitTime = 0.000001 / 1
+    waitTime = 0.0001 / 1
     while True:
         resetSensor = GPIO.input(resetPin)
         stopSensor = GPIO.input(stopPin)
@@ -392,38 +392,50 @@ def test_motor_reverse():
     
 def test_position():
     """
-    前往每一个磁点（stopPin），到达后停下来等待输入信号继续前进，直到终点（endPin）。
+    电机前进，检测到新磁点且步数大于 min_steps_between_stalls 后停机。
+    防止重复触发同一个磁点。
     """
-    GPIO.output(DIR, 0)  # 设置前进方向
-    waitTime = 0.000001 / 1
+    GPIO.output(DIR, 0)
+    waitTime = 0.00001
+    min_steps_between_stalls = 5000
+    steps_since_last_stall = 0
     visited_stalls = 0
+
+    GPIO.output(ENA, GPIO.LOW)
     print("Start moving through stalls...")
 
-    while True:
-        stopSensor = GPIO.input(stopPin)
-        endSensor = GPIO.input(endPin)
+    try:
+        while True:
+            stopSensor = GPIO.input(stopPin)
+            endSensor = GPIO.input(endPin)
 
-        # Motor step
-        GPIO.output(STEP, True)
-        sleep(waitTime)
-        GPIO.output(STEP, False)
-        sleep(waitTime)
+            # 步进
+            GPIO.output(STEP, True)
+            time.sleep(waitTime)
+            GPIO.output(STEP, False)
+            time.sleep(waitTime)
+            steps_since_last_stall += 1
 
-        if stopSensor == 0:
-            visited_stalls += 1
-            print(f"Reached stall #{visited_stalls}. Waiting for user input to continue...")
-            input("Press Enter to continue...")
+            # 检查新磁点
+            if stopSensor == 0 and steps_since_last_stall >= min_steps_between_stalls:
+                visited_stalls += 1
+                print(f"Reached new stall #{visited_stalls} after {steps_since_last_stall} steps.")
+                GPIO.output(ENA, GPIO.HIGH)  # 断电停机
+                break  # 程序停止，等待人工介入
 
-            # 等待传感器从低变高避免重复触发
-            while GPIO.input(stopPin) == 0:
-                sleep(0.01)
+            if endSensor == 0:
+                print("Reached the end point.")
+                GPIO.output(ENA, GPIO.HIGH)
+                break
 
-        if endSensor == 0:
-            print("Reached the end point.")
-            GPIO.output(ENA, True)
-            break
+    except KeyboardInterrupt:
+        print("\nManual stop detected. Exiting safely.")
+        GPIO.output(ENA, GPIO.HIGH)
 
-    GPIO.cleanup()
+    finally:
+        GPIO.cleanup()
+
+
 
 def enter_test():
     while True:
