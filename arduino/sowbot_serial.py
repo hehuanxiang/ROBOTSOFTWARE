@@ -4,10 +4,25 @@ import json
 import signal
 from controller_core_serial import run_motor  # ✅ 使用新版 controller_core
 from camera_core import run_camera_system
-from logger_setup import setup_logger
 import serial
 import serial.tools.list_ports 
 from time import sleep
+from logger_setup import get_file_logger
+from logging.handlers import QueueHandler, QueueListener
+import logging
+from multiprocessing import Queue
+from datetime import datetime
+
+
+def setup_worker_logger(log_queue, submodule_name):
+    logger = logging.getLogger(f"Sowbot.{submodule_name}")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+    logger.propagate = False
+    logger.addHandler(QueueHandler(log_queue))
+    return logger
+
+
 
 def load_config():
     with open("/home/pi/Desktop/ROBOTSOFTWARE/farm_config.json", "r") as f:
@@ -39,8 +54,13 @@ if __name__ == "__main__":
     task_queue = manager.Queue(maxsize=20)
     stop_event = multiprocessing.Event()
 
-    motor_logger = setup_logger("motor")
-    camera_logger = setup_logger("camera")
+    log_queue = Queue()
+    main_logger = get_file_logger()
+    log_listener = QueueListener(log_queue, *main_logger.handlers)
+    log_listener.start()
+
+    motor_logger = setup_worker_logger(log_queue, "motor")
+    camera_logger = setup_worker_logger(log_queue, "camera")
     
     # sleep(10)       # 等待arduino启动
     port = find_arduino_port()
@@ -85,6 +105,7 @@ if __name__ == "__main__":
             motor_logger.info("🛑 Emergency STOP and DISABLE sent to Arduino.")
         except Exception as e:
             motor_logger.warning(f"⚠️ Failed to stop motor via serial: {e}")
-
-    motor_logger.info("✅ Motor process ended")
-    camera_logger.info("✅ Camera process ended")
+    finally:
+        motor_logger.info("✅ Motor process ended")
+        camera_logger.info("✅ Camera process ended")
+        log_listener.stop()  

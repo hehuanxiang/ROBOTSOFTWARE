@@ -5,11 +5,13 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 import socket
 import subprocess
+from email.header import Header
+
 
 # 配置邮箱信息
-mail_host = 'smtp.gmail.com.'   # QQ 企业邮箱 SMTP 地址
+mail_host = 'smtp.gmail.com'   # QQ 企业邮箱 SMTP 地址
 mail_user = 'hxh0326@gmail.com'     # 邮箱账号
-mail_pass = 'pnkvseixcwzvlqlu'   # 授权码，不是密码
+mail_pass = 'paqxxzrnywwohkrg'   # 授权码，不是密码
 mail_postfix = 'gmail.com'             # 邮箱域名
 
 def get_ip_addresses():
@@ -30,6 +32,7 @@ def send_mail(to_list, subject, content):
     msg['From'] = formataddr(["树莓派通知", me])
     msg['To'] = to_list
     msg['Subject'] = subject
+    msg['Subject'] = Header(subject, 'utf-8')
 
     try:
         s = smtplib.SMTP_SSL(mail_host, 465)
@@ -44,7 +47,7 @@ def send_mail(to_list, subject, content):
 
 if __name__ == "__main__":
     # 设置收件人和邮件主题
-    recipient = "recipient_email@example.com"
+    recipient = "hxh0326@gmail.com"
     subject = "树莓派 IP 地址通知"
 
     # 获取 IP 地址信息

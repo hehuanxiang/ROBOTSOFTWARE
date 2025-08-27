@@ -9,33 +9,66 @@ import json
 from datetime import datetime, timedelta
 
 
-LOG_FILE = "/home/pi/Desktop/ROBOTSOFTWARE/robot_log/Sowbot_record_{}.log".format(date.today())
+# LOG_FILE = "/home/pi/Desktop/ROBOTSOFTWARE/robot_log/Sowbot_record_{}.log".format(date.today())
 
 def send_arduino_cmd(ser, cmd):
     ser.write((cmd + '\n').encode())
     time.sleep(0.001)
     
-def send_and_wait_ack(ser, cmd, expect_ack, timeout=3):
+def send_and_wait_ack(ser, cmd, expect_ack, timeout=6, retries=3, logger=None):
     """
-    向 Arduino 发送命令，并等待特定 ACK 响应。
-    - ser: 串口对象
-    - cmd: 要发送的字符串命令（如 START 5000）
-    - expect_ack: 预期的确认响应（如 ACK_START, ACK_STOP）
-    - timeout: 最长等待时间（秒）
+    发送命令并等待特定 ACK，支持重试（最小改动版）。
+    - timeout: 每次尝试的等待时长（默认 6s 比原来 3s 更稳）
+    - retries: 尝试次数（默认 3 次）
     """
-    ser.flushInput()
-    ser.write((cmd + '\n').encode())
-    
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if ser.in_waiting:
-            line = ser.readline().decode().strip()
-            if line == expect_ack:
-                return True
-            elif line.startswith("ERR") or line.startswith("SLOWDOWN"):
-                continue  # 可选：打印中间状态或错误
-    print(f"⏱️ 超时未收到 {expect_ack} for '{cmd}'")
-    return False  # 超时未收到 ACK
+    for attempt in range(1, retries + 1):
+        # 1) 清输入缓冲，避免吃到旧 ACK/半行垃圾
+        try:
+            if hasattr(ser, "reset_input_buffer"):
+                ser.reset_input_buffer()
+            else:
+                ser.flushInput()
+        except Exception:
+            pass
+
+        # 2) 发送并 flush，确保立刻下发
+        ser.write((cmd + '\n').encode())
+        try:
+            ser.flush()
+        except Exception:
+            pass
+
+        # 3) 等待 ACK（忽略空行和杂散输出）
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if ser.in_waiting:
+                line = ser.readline().decode(errors="ignore").strip()
+                if not line:
+                    continue
+                if line == expect_ack:
+                    if logger: logger.debug(f"✅ 收到 {line} (attempt {attempt}/{retries})")
+                    return True
+                # 忽略中间状态或其他打印
+                if line.startswith("ERR") or line.startswith("SLOWDOWN"):
+                    continue
+            time.sleep(0.01)  # 轻微退避，避免忙等
+
+        # 4) 本次尝试失败：发一次 STOP 同步后再重试（只在重试场景做）
+        if attempt < retries:
+            if logger: logger.warning(f"⚠️ 未收到 {expect_ack}，准备重试 {attempt}/{retries}，先发送 STOP 同步")
+            try:
+                ser.write(b"STOP\n")
+                ser.flush()
+            except Exception:
+                pass
+            time.sleep(0.05)
+
+    # 全部尝试失败
+    if logger:
+        logger.error(f"⏱️ 超时未收到 {expect_ack} for '{cmd}'（共重试 {retries} 次）")
+    else:
+        print(f"⏱️ 超时未收到 {expect_ack} for '{cmd}'（共重试 {retries} 次）")
+    return False
 
 
 def setup_gpio(pins):
@@ -45,15 +78,15 @@ def setup_gpio(pins):
     GPIO.setup(pins["endPin"], GPIO.IN)
     GPIO.setup(pins["magnetPin"], GPIO.IN)
 
-def setup_motor_logger():
-    logger = logging.getLogger("Sowbot")
-    if not logger.handlers:
-        handler = logging.FileHandler(LOG_FILE)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
-    return logger
+# def setup_motor_logger():
+#     logger = logging.getLogger("Sowbot")
+#     if not logger.handlers:
+#         handler = logging.FileHandler(LOG_FILE)
+#         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+#         handler.setFormatter(formatter)
+#         logger.addHandler(handler)
+#         logger.setLevel(logging.DEBUG)
+#     return logger
 
 def reset(pins, logger, ser, freq):
     logger.info("🔁 开始归零流程（reset）")
@@ -118,8 +151,6 @@ def wait_until_next_five_minutes(logger):
 
 def run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port, freq=5000):
     setup_gpio(pins)
-    
-    
 
     # ✅ 多次尝试连接串口
     max_retries = 15
@@ -232,9 +263,8 @@ def run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port, freq=
         elapsed = time.time() - cycle_start_time
         logger.info(f"✅ 完成周期 {cycle_count}，耗时 {elapsed:.2f}s, 共检测到 {len(detected_stalls)} 个检查点")
         detected_stalls = set()  # ✅ 完成后重置集合
-
-            
-    # 清理资源：串口关闭
-    if ser.is_open:
-        ser.close()
-        logger.info("🔒 已关闭串口连接")
+        
+        # ===== 写入轮次日志（用于播报分析） =====
+        log_line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')},cycle={cycle_count}\n"
+        with open("/home/pi/Desktop/ROBOTSOFTWARE/arduino/analysis/report_log/daily_summary.log", "a") as f:
+            f.write(log_line)

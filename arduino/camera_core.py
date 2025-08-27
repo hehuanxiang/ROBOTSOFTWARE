@@ -11,17 +11,17 @@ from time import sleep
 import time
 
 # 设置统一的日志文件名
-LOG_FILE = "/home/pi/Desktop/ROBOTSOFTWARE/robot_log/Sowbot_record_{}.log".format(datetime.date.today())
+# LOG_FILE = "/home/pi/Desktop/ROBOTSOFTWARE/robot_log/Sowbot_record_{}.log".format(datetime.date.today())
 
-def setup_camera_logger():
-    logger = logging.getLogger("Sowbot")
-    if not logger.handlers:
-        handler = logging.FileHandler(LOG_FILE)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
-    return logger
+# def setup_camera_logger():
+#     logger = logging.getLogger("Sowbot")
+#     if not logger.handlers:
+#         handler = logging.FileHandler(LOG_FILE)
+#         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+#         handler.setFormatter(formatter)
+#         logger.addHandler(handler)
+#         logger.setLevel(logging.DEBUG)
+#     return logger
 
 def setup_camera(logger):
     pipeline = rs.pipeline()
@@ -42,10 +42,12 @@ def setup_camera(logger):
 
 def capture_images(pipeline, profile, pig_id, stall_id, logger):
     timestamp = datetime.datetime.now()
-    path = f"/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2025_07/ID_{str(stall_id).zfill(2)}_{str(pig_id)}"
+    path = f"/home/pi/Desktop/ROBOTSOFTWARE/Data/Data_Estrus_2025_08/ID_{str(stall_id).zfill(2)}_{str(pig_id)}"
     os.makedirs(os.path.join(path, "depth"), exist_ok=True)
     os.makedirs(os.path.join(path, "RGB"), exist_ok=True)
     os.makedirs(os.path.join(path, "IR"), exist_ok=True)
+    os.makedirs(os.path.join(path, "RGB_noAligned"), exist_ok=True)
+    os.makedirs(os.path.join(path, "IR_noAligned"), exist_ok=True)
     imgname = f"{pig_id}_{timestamp.year}_{timestamp.month}_{timestamp.day}_{timestamp.hour}_{timestamp.minute}_{timestamp.second}"
 
     logger.debug(f"Preparing to capture image: {imgname} at stall {stall_id}")
@@ -62,7 +64,9 @@ def capture_images(pipeline, profile, pig_id, stall_id, logger):
         aligned_frames = align.process(frames)
         depth = aligned_frames.get_depth_frame()
         color = aligned_frames.get_color_frame()
+        raw_color = frames.get_color_frame()
         ir = aligned_frames.get_infrared_frame()  
+        raw_ir = frames.get_infrared_frame()  
         
         if not color or not depth or not ir:
             continue
@@ -71,6 +75,8 @@ def capture_images(pipeline, profile, pig_id, stall_id, logger):
         cv2.imwrite(os.path.join(path, "depth", f"{imgname}.png"), np.asanyarray(depth.get_data()))
         cv2.imwrite(os.path.join(path, "RGB", f"{imgname}.png"), np.asanyarray(color.get_data()))
         cv2.imwrite(os.path.join(path, "IR", f"{imgname}.png"), np.asanyarray(ir.get_data()))
+        cv2.imwrite(os.path.join(path, "RGB_noAligned", f"{imgname}.png"), np.asanyarray(raw_color.get_data()))
+        cv2.imwrite(os.path.join(path, "IR_noAligned", f"{imgname}.png"), np.asanyarray(raw_ir.get_data()))
 
         logger.debug(f"📸 Captured images for pig {pig_id} at stall {stall_id} saved as {imgname}")
 
