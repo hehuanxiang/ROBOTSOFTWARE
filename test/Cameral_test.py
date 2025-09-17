@@ -23,7 +23,7 @@ def cameral_test():
 
     # 启用深度、彩色和红外流
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)  # 深度流
-    config.enable_stream(rs.stream.color, 1280, 720, rs.format.bgr8, 30)  # 彩色流
+    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)  # 彩色流
     config.enable_stream(rs.stream.infrared, 0, 640, 480, rs.format.y8, 30)  # 红外流
     # config.enable_stream(rs.stream.infrared,0,848,480,rs.format.y8,30)
 
@@ -44,39 +44,42 @@ def cameral_test():
     frame_count = 0  # 用于命名保存的图片
 
     try:
-        while frame_count < 10:
-            # 等待帧并获取数据
-            # frames = pipeline.wait_for_frames()
-            frames = pipeline.poll_for_frames()  # 非阻塞
+        # 等待帧并获取数据
+        # frames = pipeline.wait_for_frames()
+        
+        for _ in range(10):
+            pipeline.wait_for_frames(1000)  # 1000ms 超时
+        
+        frames = pipeline.poll_for_frames()  # 非阻塞
 
-            # 获取深度、彩色和红外帧
-            depth_frame = frames.get_depth_frame()
-            color_frame = frames.get_color_frame()
-            infrared_frame = frames.get_infrared_frame()
+        # 获取深度、彩色和红外帧
+        depth_frame = frames.get_depth_frame()
+        color_frame = frames.get_color_frame()
+        infrared_frame = frames.get_infrared_frame()
 
-            if not depth_frame or not color_frame or not infrared_frame:
-                continue
+        if not depth_frame or not color_frame or not infrared_frame:
+            print("无法获取所有数据流的帧")
 
-            # 将数据转换为numpy数组
-            depth_image = np.asanyarray(depth_frame.get_data())
-            color_image = np.asanyarray(color_frame.get_data())
-            infrared_image = np.asanyarray(infrared_frame.get_data())
+        # 将数据转换为numpy数组
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
+        infrared_image = np.asanyarray(infrared_frame.get_data())
 
-            # 显示各个数据流
-            # cv2.imshow('Depth Stream', depth_image)
-            # cv2.imshow('Color Stream', color_image)
-            # cv2.imshow('Infrared Stream', infrared_image)
+        # 显示各个数据流
+        # cv2.imshow('Depth Stream', depth_image)
+        # cv2.imshow('Color Stream', color_image)
+        # cv2.imshow('Infrared Stream', infrared_image)
 
-            # 保存每一帧到test文件夹
-            cv2.imwrite(f"{output_folder}/depth_{frame_count}.png", depth_image)
-            cv2.imwrite(f"{output_folder}/color_{frame_count}.png", color_image)
-            cv2.imwrite(f"{output_folder}/infrared_{frame_count}.png", infrared_image)
+        # 保存每一帧到test文件夹
+        cv2.imwrite(f"{output_folder}/depth_{frame_count}.png", depth_image)
+        cv2.imwrite(f"{output_folder}/color_{frame_count}.png", color_image)
+        cv2.imwrite(f"{output_folder}/infrared_{frame_count}.png", infrared_image)
 
-            frame_count += 1  # 更新帧计数
+        frame_count += 1  # 更新帧计数
 
-            # 按 'q' 键退出
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        # 按 'q' 键退出
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
             
         print("拍照结束")
 

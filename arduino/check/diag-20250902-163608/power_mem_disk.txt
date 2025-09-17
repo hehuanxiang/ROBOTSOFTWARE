@@ -1,0 +1,29 @@
+=== vcgencmd get_throttled (若无则忽略) ===
+throttled=0x0
+
+=== free -h ===
+              total        used        free      shared  buff/cache   available
+Mem:          7.7Gi       1.5Gi       4.6Gi       0.0Ki       1.7Gi       6.0Gi
+Swap:         2.0Gi          0B       2.0Gi
+
+=== df -h ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       234G  131G   91G  60% /
+devtmpfs        3.7G     0  3.7G   0% /dev
+tmpfs           3.9G   32K  3.9G   1% /dev/shm
+tmpfs           3.9G  888K  3.9G   1% /run
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+tmpfs           3.9G     0  3.9G   0% /sys/fs/cgroup
+/dev/mmcblk0p1  253M   50M  203M  20% /boot
+tmpfs           790M     0  790M   0% /run/user/1000
+
+=== df -i ===
+Filesystem       Inodes  IUsed    IFree IUse% Mounted on
+/dev/root      15605760 506708 15099052    4% /
+devtmpfs          74942    460    74482    1% /dev
+tmpfs            157374      9   157365    1% /dev/shm
+tmpfs            157374    645   156729    1% /run
+tmpfs            157374      3   157371    1% /run/lock
+tmpfs            157374     15   157359    1% /sys/fs/cgroup
+/dev/mmcblk0p1        0      0        0     - /boot
+tmpfs            157374     17   157357    1% /run/user/1000

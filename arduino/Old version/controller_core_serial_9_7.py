@@ -143,14 +143,13 @@ def reset(pins, logger, ser, freq):
     
 def wait_until_next_five_minutes(logger):
     now = datetime.now()
-    # next_minute = (now.minute // 5 + 1) * 5
-    next_minute = (now.minute // 1 + 1) * 1
+    next_minute = (now.minute // 5 + 1) * 5
     next_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(minutes=next_minute)
     sleep_seconds = (next_time - now).total_seconds()
     logger.info(f"⏳ 当前时间 {now.strftime('%H:%M:%S')}，等待 {sleep_seconds:.1f} 秒直到下一个 5 分钟周期（{next_time.strftime('%H:%M:%S')}）...")
     time.sleep(sleep_seconds)
 
-def run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port, freq=4000):
+def run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port, freq=5000):
     setup_gpio(pins)
 
     # ✅ 多次尝试连接串口
@@ -185,87 +184,83 @@ def run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port, freq=
     detected_stalls = set()
 
     while not stop_event.is_set():
-        wait_until_next_five_minutes(logger)
-        
+        wait_until_next_five_minutes(logger)  # 如需按时间触发可再启用
+
         cycle_start_time = time.time()
         logger.info(f"⏱️ 开始新周期 {cycle_count+1}，时间 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
+
+        # ✅ 通知相机：本轮开始，先启动相机
+        try:
+            queue.put_nowait({"type": "cycle_start"})
+            logger.debug("🔔 queued: cycle_start")
+            sleep(30)
+            logger.info("✅ 等待 30 秒，确保相机启动完毕")
+        except Exception as e:
+            logger.warning(f"⚠️ queue cycle_start failed: {e}")
+
         # 每一轮都重新上电并设置方向
-        # send_arduino_cmd(ser, 'E0')  # 上电
         send_arduino_cmd(ser, 'D0')  # 正转
         logger.info(f"🚶 正在前往 Stall_{stall_id}")
         stepCount = 0
 
-        # send_arduino_cmd(ser, f'START {freq}')
         if not send_and_wait_ack(ser, f'START {freq}', 'ACK_START'):
             logger.warning("⚠️ 启动失败（未收到 ACK_START）")
 
         while True:
-            time.sleep(0.001)  # 1ms 轮询磁点
+            time.sleep(0.001)
             stepCount += 1
-            # if GPIO.input(pins["magnetPin"]) == 0:
-            #     print(f"🔍 检测到磁点，step={stepCount}")
-            if GPIO.input(pins["magnetPin"]) == 0 and stepCount > 400: # 1500
-                # send_arduino_cmd(ser, 'STOP')
-                logger.info(f"📍 Stall_{stall_id} 检测到磁铁，step={stepCount}")
 
+            if GPIO.input(pins["magnetPin"]) == 0 and stepCount > 1500:
+                logger.debug(f"📍 Stall_{stall_id} 检测到磁铁，step={stepCount}")
+
+                # ✅ 通知相机：该点位拍照
                 try:
                     queue.put_nowait({
+                        "type": "capture",
                         "stall": stall_id,
                         "pig_id": pig_ids[stall_id]
                     })
-                    logger.debug(f"📸 添加任务: stall={stall_id}, pig_id={pig_ids[stall_id]}")
+                    logger.debug(f"📸 queued: capture stall={stall_id}, pig_id={pig_ids[stall_id]}")
                 except Exception as e:
-                    logger.warning(f"⚠️ 加入队列失败: {e}")
+                    logger.warning(f"⚠️ queue capture failed: {e}")
 
                 detected_stalls.add(stall_id)
                 stall_id = (stall_id + 1) % stallNumber
-                stepCount = 0  # 重置步数计数
-
-                # if stall_id == 0 and cycle_start_time is not None:
-                #     cycle_count += 1
-                #     elapsed = time.time() - cycle_start_time
-                #     logger.info(f"✅ 完成第 {cycle_count} 轮数据采集，用时 {elapsed:.2f}s，共检测到 {len(detected_stalls)} 个检查点")
-                #     detected_stalls = set()  # ✅ 完成后重置集合
-                # break
+                stepCount = 0
 
             if GPIO.input(pins["endPin"]) == 0:
-                # send_arduino_cmd(ser, 'STOP')
                 if not send_and_wait_ack(ser, 'STOP', 'ACK_STOP'):
                     logger.warning("⚠️ 停止失败（未收到 ACK_STOP）")
-
                 logger.info("🚧 到达轨道末端，暂停 3 秒...")
                 sleep(3)
 
                 logger.info("↩️ 开始回退归位...")
-                send_arduino_cmd(ser, 'D1')  # 方向设为回退
-                # send_arduino_cmd(ser, f'START {freq}')
+                send_arduino_cmd(ser, 'D1')
                 if not send_and_wait_ack(ser, f'START {freq}', 'ACK_START'):
                     logger.warning("⚠️ 回退启动失败")
 
                 while GPIO.input(pins["resetPin"]) != 0:
                     time.sleep(0.001)
-                # send_arduino_cmd(ser, 'STOP')
-                
                 if not send_and_wait_ack(ser, 'STOP', 'ACK_STOP'):
                     logger.warning("⚠️ 回退停止失败")
 
-
                 logger.info("✅ 成功回到 resetPin（归位点）")
-                
-                sleep(5)
-                # send_arduino_cmd(ser, 'E1')  # ⛔ 电机断电
 
+                # ✅ 通知相机：本轮结束，停止相机
+                try:
+                    queue.put_nowait({"type": "cycle_end"})
+                    logger.debug("🔔 queued: cycle_end")
+                except Exception as e:
+                    logger.warning(f"⚠️ queue cycle_end failed: {e}")
+
+                sleep(5)
                 stall_id = 0
                 break
-        
-        
+
         cycle_count += 1
         elapsed = time.time() - cycle_start_time
         logger.info(f"✅ 完成周期 {cycle_count}，耗时 {elapsed:.2f}s, 共检测到 {len(detected_stalls)} 个检查点")
-        detected_stalls = set()  # ✅ 完成后重置集合
-        
-        # ===== 写入轮次日志（用于播报分析） =====
-        log_line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')},cycle={cycle_count}\n"
+        detected_stalls = set()
+
         with open("/home/pi/Desktop/ROBOTSOFTWARE/arduino/analysis/report_log/daily_summary.log", "a") as f:
-            f.write(log_line)
+            f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')},cycle={cycle_count}\n")

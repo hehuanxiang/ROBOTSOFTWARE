@@ -1,0 +1,4 @@
+=== L515 sysfs: 2-1 ===
+power/control: auto
+power/autosuspend: -1
+bConfigurationValue: 1

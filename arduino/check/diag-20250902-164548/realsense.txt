@@ -1,0 +1,4 @@
+=== rs-enumerate-devices (若无则忽略) ===
+ 02/09 16:45:52,743 ERROR [3013338176] (handle-libusb.h:100) failed to claim usb interface: 0, error: RS2_USB_STATUS_BUSY
+ 02/09 16:45:52,756 ERROR [3069612096] (sensor.cpp:572) acquire_power failed: failed to set power state
+Could not create device - failed to set power state . Check SDK logs for details

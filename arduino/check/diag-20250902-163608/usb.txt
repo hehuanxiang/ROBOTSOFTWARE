@@ -1,0 +1,121 @@
+=== lsusb ===
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 003: ID 8086:0b64 Intel Corp. 
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 003: ID 2341:0043 Arduino SA Uno R3 (CDC ACM)
+Bus 001 Device 002: ID 2109:3431 VIA Labs, Inc. Hub
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+=== lsusb -t ===
+/:  Bus 03.Port 1: Dev 1, Class=root_hub, Driver=dwc2/1p, 480M
+/:  Bus 02.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/4p, 5000M
+    |__ Port 1: Dev 3, If 0, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 1, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 2, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 3, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 4, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 5, Class=Video, Driver=uvcvideo, 5000M
+    |__ Port 1: Dev 3, If 6, Class=Vendor Specific Class, Driver=, 5000M
+    |__ Port 1: Dev 3, If 7, Class=Human Interface Device, Driver=usbhid, 5000M
+/:  Bus 01.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/1p, 480M
+    |__ Port 1: Dev 2, If 0, Class=Hub, Driver=hub/4p, 480M
+        |__ Port 3: Dev 3, If 0, Class=Communications, Driver=cdc_acm, 12M
+        |__ Port 3: Dev 3, If 1, Class=CDC Data, Driver=cdc_acm, 12M
+
+=== dmesg | USB（本次启动） ===
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver usbfs
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver hub
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new device driver usb
+Sep 02 13:42:43 raspberrypi kernel: usb_phy_generic phy: supply vcc not found, using dummy regulator
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver r8152
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver lan78xx
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver smsc95xx
+Sep 02 13:42:43 raspberrypi kernel: xhci_hcd 0000:01:00.0: new USB bus registered, assigned bus number 1
+Sep 02 13:42:43 raspberrypi kernel: usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 5.10
+Sep 02 13:42:43 raspberrypi kernel: usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Sep 02 13:42:43 raspberrypi kernel: usb usb1: Product: xHCI Host Controller
+Sep 02 13:42:43 raspberrypi kernel: usb usb1: Manufacturer: Linux 5.10.103-v7l+ xhci-hcd
+Sep 02 13:42:43 raspberrypi kernel: usb usb1: SerialNumber: 0000:01:00.0
+Sep 02 13:42:43 raspberrypi kernel: hub 1-0:1.0: USB hub found
+Sep 02 13:42:43 raspberrypi kernel: xhci_hcd 0000:01:00.0: new USB bus registered, assigned bus number 2
+Sep 02 13:42:43 raspberrypi kernel: xhci_hcd 0000:01:00.0: Host supports USB 3.0 SuperSpeed
+Sep 02 13:42:43 raspberrypi kernel: usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 5.10
+Sep 02 13:42:43 raspberrypi kernel: usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Sep 02 13:42:43 raspberrypi kernel: usb usb2: Product: xHCI Host Controller
+Sep 02 13:42:43 raspberrypi kernel: usb usb2: Manufacturer: Linux 5.10.103-v7l+ xhci-hcd
+Sep 02 13:42:43 raspberrypi kernel: usb usb2: SerialNumber: 0000:01:00.0
+Sep 02 13:42:43 raspberrypi kernel: hub 2-0:1.0: USB hub found
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver uas
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver usb-storage
+Sep 02 13:42:43 raspberrypi kernel: usbcore: registered new interface driver usbhid
+Sep 02 13:42:43 raspberrypi kernel: usbhid: USB HID core driver
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1: new high-speed USB device number 2 using xhci_hcd
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1: New USB device found, idVendor=2109, idProduct=3431, bcdDevice= 4.21
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1: New USB device strings: Mfr=0, Product=1, SerialNumber=0
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1: Product: USB2.0 Hub
+Sep 02 13:42:43 raspberrypi kernel: hub 1-1:1.0: USB hub found
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: new SuperSpeed Gen 1 USB device number 2 using xhci_hcd
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: New USB device found, idVendor=8086, idProduct=0b64, bcdDevice=10.58
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: Product: Intel(R) RealSense(TM) 515
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: Manufacturer: Intel(R) RealSense(TM) Camera
+Sep 02 13:42:43 raspberrypi kernel: usb 2-1: SerialNumber: 00000000F1371983
+Sep 02 13:42:43 raspberrypi kernel: hid-generic 0003:8086:0B64.0001: hiddev96,hidraw0: USB HID v1.10 Device [Intel(R) RealSense(TM) Camera Intel(R) RealSense(TM) 515] on usb-0000:01:00.0-1/input7
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1.3: new full-speed USB device number 3 using xhci_hcd
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1.3: New USB device found, idVendor=2341, idProduct=0043, bcdDevice= 0.01
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=220
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1.3: Manufacturer: Arduino (www.arduino.cc)
+Sep 02 13:42:43 raspberrypi kernel: usb 1-1.3: SerialNumber: 3423433353835180A0A0
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: supply vusb_d not found, using dummy regulator
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: supply vusb_a not found, using dummy regulator
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: EPs: 8, dedicated fifos, 4080 entries in SPRAM
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: DWC OTG Controller
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: new USB bus registered, assigned bus number 3
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: irq 38, io mem 0xfe980000
+Sep 02 13:42:43 raspberrypi kernel: usb usb3: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 5.10
+Sep 02 13:42:43 raspberrypi kernel: usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+Sep 02 13:42:43 raspberrypi kernel: usb usb3: Product: DWC OTG Controller
+Sep 02 13:42:43 raspberrypi kernel: usb usb3: Manufacturer: Linux 5.10.103-v7l+ dwc2_hsotg
+Sep 02 13:42:43 raspberrypi kernel: usb usb3: SerialNumber: fe980000.usb
+Sep 02 13:42:43 raspberrypi kernel: hub 3-0:1.0: USB hub found
+Sep 02 13:42:43 raspberrypi kernel: usb0: HOST MAC 3a:6f:5e:69:9e:ed
+Sep 02 13:42:43 raspberrypi kernel: usb0: MAC de:fb:71:19:6a:87
+Sep 02 13:42:43 raspberrypi kernel: dwc2 fe980000.usb: bound driver g_ether
+Sep 02 13:42:47 raspberrypi kernel: cdc_acm 1-1.3:1.0: ttyACM0: USB ACM device
+Sep 02 13:42:47 raspberrypi kernel: usbcore: registered new interface driver cdc_acm
+Sep 02 13:42:47 raspberrypi kernel: cdc_acm: USB Abstract Control Model driver for USB modems and ISDN adapters
+Sep 02 13:42:47 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input0
+Sep 02 13:42:47 raspberrypi kernel: usbcore: registered new interface driver uvcvideo
+Sep 02 13:42:47 raspberrypi kernel: USB Video Class driver (1.1.1)
+Sep 02 13:42:48 raspberrypi kernel: usbcore: registered new interface driver brcmfmac
+Sep 02 13:43:10 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input1
+Sep 02 13:43:10 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input2
+Sep 02 13:43:10 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input3
+Sep 02 13:43:11 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input4
+Sep 02 13:43:11 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input5
+Sep 02 13:43:11 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input6
+Sep 02 15:32:26 raspberrypi kernel: usb 2-1: usbfs: usb_submit_urb returned -19
+Sep 02 15:32:26 raspberrypi kernel: usb 2-1: Process 1051 (python) called USBDEVFS_CLEAR_HALT for active endpoint 0x83
+Sep 02 15:32:26 raspberrypi kernel: usb 2-1: Process 1048 (python) called USBDEVFS_CLEAR_HALT for active endpoint 0x82
+Sep 02 15:32:26 raspberrypi kernel: usb 2-1: Process 1055 (python) called USBDEVFS_CLEAR_HALT for active endpoint 0x85
+Sep 02 15:32:27 raspberrypi kernel: usb 2-1: USB disconnect, device number 2
+Sep 02 15:32:28 raspberrypi kernel: usb 2-1: new SuperSpeed Gen 1 USB device number 3 using xhci_hcd
+Sep 02 15:32:28 raspberrypi kernel: usb 2-1: New USB device found, idVendor=8086, idProduct=0b64, bcdDevice=10.58
+Sep 02 15:32:28 raspberrypi kernel: usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+Sep 02 15:32:29 raspberrypi kernel: usb 2-1: Product: Intel(R) RealSense(TM) 515
+Sep 02 15:32:29 raspberrypi kernel: usb 2-1: Manufacturer: Intel(R) RealSense(TM) Camera
+Sep 02 15:32:29 raspberrypi kernel: usb 2-1: SerialNumber: 00000000F1371983
+Sep 02 15:32:29 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input7
+Sep 02 15:32:29 raspberrypi kernel: hid-generic 0003:8086:0B64.0002: hiddev96,hidraw0: USB HID v1.10 Device [Intel(R) RealSense(TM) Camera Intel(R) RealSense(TM) 515] on usb-0000:01:00.0-1/input7
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input8
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input9
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input10
+Sep 02 16:35:08 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input11
+Sep 02 16:35:08 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input12
+
+=== 最近5分钟内核USB事件 ===
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input8
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input9
+Sep 02 16:35:07 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input10
+Sep 02 16:35:08 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input11
+Sep 02 16:35:08 raspberrypi kernel: input: Intel(R) RealSense(TM) 515: Int as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb2/2-1/2-1:1.0/input/input12

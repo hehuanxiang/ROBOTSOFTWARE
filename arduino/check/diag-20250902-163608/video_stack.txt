@@ -1,0 +1,28 @@
+=== uvcvideo 模块 ===
+videobuf2_dma_contig    20480  2 bcm2835_isp,bcm2835_codec
+uvcvideo               98304  0
+videobuf2_vmalloc      16384  2 uvcvideo,bcm2835_v4l2
+videobuf2_memops       16384  2 videobuf2_dma_contig,videobuf2_vmalloc
+videobuf2_v4l2         32768  5 bcm2835_isp,uvcvideo,bcm2835_codec,bcm2835_v4l2,v4l2_mem2mem
+videobuf2_common       61440  6 bcm2835_isp,uvcvideo,bcm2835_codec,bcm2835_v4l2,v4l2_mem2mem,videobuf2_v4l2
+videodev              249856  7 bcm2835_isp,uvcvideo,bcm2835_codec,videobuf2_common,bcm2835_v4l2,v4l2_mem2mem,videobuf2_v4l2
+
+=== /dev/video* ===
+crw-rw-rw-+ 1 root plugdev 81,  0 Sep  2 16:36 /dev/video0
+crw-rw-rw-+ 1 root plugdev 81,  1 Sep  2 16:36 /dev/video1
+crw-rw----+ 1 root video   81, 12 Sep  2 13:42 /dev/video10
+crw-rw----+ 1 root video   81, 13 Sep  2 13:42 /dev/video11
+crw-rw----+ 1 root video   81, 14 Sep  2 13:42 /dev/video12
+crw-rw----+ 1 root video   81,  8 Sep  2 13:42 /dev/video13
+crw-rw----+ 1 root video   81,  9 Sep  2 13:42 /dev/video14
+crw-rw----+ 1 root video   81, 10 Sep  2 13:42 /dev/video15
+crw-rw----+ 1 root video   81, 11 Sep  2 13:42 /dev/video16
+crw-rw----+ 1 root video   81, 15 Sep  2 13:42 /dev/video18
+crw-rw-rw-+ 1 root plugdev 81,  2 Sep  2 16:36 /dev/video2
+crw-rw-rw-+ 1 root plugdev 81,  3 Sep  2 16:36 /dev/video3
+crw-rw-rw-+ 1 root plugdev 81,  4 Sep  2 16:36 /dev/video4
+crw-rw-rw-+ 1 root plugdev 81,  5 Sep  2 16:36 /dev/video5
+crw-rw-rw-+ 1 root plugdev 81,  6 Sep  2 16:36 /dev/video6
+crw-rw-rw-+ 1 root plugdev 81,  7 Sep  2 16:36 /dev/video7
+
+=== 哪些进程打开了 /dev/video* (lsof，若无则忽略) ===

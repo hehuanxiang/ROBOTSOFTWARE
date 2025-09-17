@@ -29,11 +29,11 @@ def load_config():
         return json.load(f)
 
 def start_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port):
-    os.sched_setaffinity(0, {0})  # 绑定 CPU 0
+    os.sched_setaffinity(0, {3})  # 绑定 CPU 3
     run_motor(pins, stallNumber, pig_ids, queue, logger, stop_event, port)
 
 def start_camera(queue, logger, stop_event):
-    os.sched_setaffinity(0, {1, 2, 3})  # 相机绑 CPU 1,2,3
+    os.sched_setaffinity(0, {0, 1, 2})  # 相机绑 CPU 0-2
     run_camera_system(queue, logger, stop_event)
     
     # ✅ 动态查找 Arduino 端口
@@ -78,8 +78,8 @@ if __name__ == "__main__":
     )
 
     try:
-        motor_logger.info("🟢 Starting motor controller on CPU 0")
-        camera_logger.info("🟢 Starting camera system on CPU 1, 2, 3")
+        motor_logger.info("🟢 Starting motor controller on CPU 3")
+        camera_logger.info("🟢 Starting camera system on CPU 0, 1, 2")
 
         motor_proc.start()
         camera_proc.start()

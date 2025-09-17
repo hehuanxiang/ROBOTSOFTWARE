@@ -1,0 +1,287 @@
+=== systemctl status sowbot.service ===
+● sowbot.service - Run sowbot_serial.py after 30s delay on boot
+   Loaded: loaded (/etc/systemd/system/sowbot.service; enabled; vendor preset: enabled)
+   Active: activating (start) since Tue 2025-09-02 16:41:54 CDT; 3min 58s ago
+ Main PID: 560 (python)
+    Tasks: 38 (limit: 4915)
+   CGroup: /system.slice/sowbot.service
+           ├─560 /usr/bin/python /home/pi/Desktop/ROBOTSOFTWARE/arduino/sowbot_serial.py
+           ├─810 /usr/bin/python /home/pi/Desktop/ROBOTSOFTWARE/arduino/sowbot_serial.py
+           ├─817 /usr/bin/python /home/pi/Desktop/ROBOTSOFTWARE/arduino/sowbot_serial.py
+           └─819 /usr/bin/python /home/pi/Desktop/ROBOTSOFTWARE/arduino/sowbot_serial.py
+
+Sep 02 16:41:54 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+
+=== sowbot.service 最近300行日志 ===
+-- Logs begin at Thu 2019-02-14 04:11:59 CST, end at Tue 2025-09-02 16:45:07 CDT. --
+Jul 17 09:50:29 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Jul 17 10:35:52 raspberrypi systemd[1]: sowbot.service: Current command vanished from the unit file, execution of the command list won't be resumed.
+Jul 17 18:07:36 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Jul 17 18:07:36 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Jul 17 18:07:36 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Jul 17 18:07:47 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 18 07:47:20 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Jul 18 13:22:14 raspberrypi systemd[1]: sowbot.service: Current command vanished from the unit file, execution of the command list won't be resumed.
+Jul 18 16:47:41 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Jul 18 16:47:41 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Jul 18 16:47:41 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Jul 18 16:47:52 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Jul 18 16:58:50 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Jul 18 16:58:50 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Jul 18 16:58:50 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Jul 18 16:59:01 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 19 07:17:09 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 20 07:43:53 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 21 05:09:56 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 21 08:17:09 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Jul 21 10:02:11 raspberrypi systemd[1]: sowbot.service: Current command vanished from the unit file, execution of the command list won't be resumed.
+-- Reboot --
+Jul 23 09:17:06 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Jul 24 08:20:46 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 01 10:17:06 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 02 08:18:32 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 05 14:06:38 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 10 15:49:18 raspberrypi systemd[1]: sowbot.service: Succeeded.
+Aug 10 15:49:18 raspberrypi systemd[1]: Started Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 10 15:53:27 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 10 15:56:09 raspberrypi systemd[1]: sowbot.service: Succeeded.
+Aug 10 15:56:09 raspberrypi systemd[1]: Started Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 11 09:31:57 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 10:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 10:23:05 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 13:21:18 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 13:37:13 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 14:01:00 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 11 14:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 12 07:22:35 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 13 07:49:58 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 14 09:17:06 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 14 11:24:28 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 15 11:33:59 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 15 11:33:59 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 15 11:33:59 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 15 11:34:06 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 19 10:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 20 08:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 22 16:17:05 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 22 16:17:05 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 22 16:17:05 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 22 16:17:21 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 24 18:21:42 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 26 17:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 26 17:25:50 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 27 10:27:35 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 27 10:27:35 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 27 10:27:35 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 27 10:27:43 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 27 10:33:50 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 27 10:33:50 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 27 10:33:50 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 27 10:33:57 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 27 10:43:01 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 27 10:43:01 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 27 10:43:01 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 27 10:43:13 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_START for 'START 5000'（共重试 3 次）
+Aug 27 14:40:18 raspberrypi python[582]: ⏱️ 超时未收到 ACK_STOP for 'STOP'（共重试 3 次）
+-- Reboot --
+Aug 28 10:17:07 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+-- Reboot --
+Aug 30 16:37:35 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 16:13:51 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 16:13:51 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 16:13:51 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 16:13:58 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 16:27:25 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 16:27:25 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 16:27:25 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 16:27:33 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 16:37:56 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 16:37:56 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 16:37:56 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 16:38:04 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 16:42:42 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 16:42:42 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 16:42:42 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 16:42:50 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 16:53:53 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 16:53:53 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 16:53:53 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 16:54:02 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 17:05:01 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Aug 31 17:05:01 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Aug 31 17:05:01 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Aug 31 17:05:08 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Aug 31 18:02:38 raspberrypi systemd[1]: sowbot.service: Succeeded.
+Aug 31 18:02:38 raspberrypi systemd[1]: Started Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Sep 01 13:17:06 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Sep 01 14:02:58 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=9/KILL
+Sep 01 14:02:58 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Sep 01 14:02:58 raspberrypi systemd[1]: Failed to start Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Sep 02 13:42:50 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
+Sep 02 16:41:46 raspberrypi systemd[1]: sowbot.service: Main process exited, code=killed, status=15/TERM
+Sep 02 16:41:46 raspberrypi systemd[1]: sowbot.service: Failed with result 'signal'.
+Sep 02 16:41:46 raspberrypi systemd[1]: Stopped Run sowbot_serial.py after 30s delay on boot.
+-- Reboot --
+Sep 02 16:41:54 raspberrypi systemd[1]: Starting Run sowbot_serial.py after 30s delay on boot...
